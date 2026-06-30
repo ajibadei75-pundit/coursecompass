@@ -50,9 +50,9 @@ const SCALE = [
 export const Route = createFileRoute("/match")({
   head: () => ({
     meta: [
-      { title: "Course Match Test — CourseCompass NG" },
+      { title: "Course Match Test — CourseCompass" },
       { name: "description", content: "Discover the Nigerian university courses that truly match your mind and personality." },
-      { property: "og:title", content: "Course Match Test — CourseCompass NG" },
+      { property: "og:title", content: "Course Match Test — CourseCompass" },
       { property: "og:description", content: "Take a 20-question quiz to find your best-fit Nigerian university course." },
     ],
   }),

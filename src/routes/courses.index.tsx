@@ -8,12 +8,12 @@ import { listCachedCourses } from "@/lib/courses.functions";
 export const Route = createFileRoute("/courses/")({
   head: () => ({
     meta: [
-      { title: "Browse Nigerian University Courses — CourseCompass NG" },
+      { title: "Browse Nigerian University Courses — CourseCompass" },
       {
         name: "description",
         content: "Search and explore AI-powered profiles of Nigerian university courses: careers, salaries, skills and AI impact.",
       },
-      { property: "og:title", content: "Browse Courses — CourseCompass Nigeria" },
+      { property: "og:title", content: "Browse Courses — CourseCompass" },
       { property: "og:description", content: "Discover the truth about every Nigerian university course." },
     ],
   }),

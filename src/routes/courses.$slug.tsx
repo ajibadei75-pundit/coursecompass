@@ -9,12 +9,12 @@ export const Route = createFileRoute("/courses/$slug")({
     const name = titleFromSlug(params.slug);
     return {
       meta: [
-        { title: `${name} — Course Profile · CourseCompass NG` },
+        { title: `${name} — Course Profile · CourseCompass` },
         {
           name: "description",
           content: `Careers, salaries, skills, software and AI impact for ${name} in Nigeria. AI-generated career intelligence for students.`,
         },
-        { property: "og:title", content: `${name} — CourseCompass Nigeria` },
+        { property: "og:title", content: `${name} — CourseCompass` },
         {
           property: "og:description",
           content: `Real opportunities, salaries and skills for ${name} in Nigeria.`,

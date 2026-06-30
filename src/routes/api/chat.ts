@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
-const SYSTEM_PROMPT = `You are the CourseCompass Nigeria AI Career Assistant.
+const SYSTEM_PROMPT = `You are the CourseCompass AI Career Assistant.
 
 Your audience: Nigerian secondary-school students, JAMB candidates, undergraduates who were placed in a different course than they wanted, and fresh graduates. Many feel anxious or disappointed about course mismatch ("I wanted Medicine but got Physiology").
 
@@ -30,7 +30,8 @@ export const Route = createFileRoute("/api/chat")({
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const model = gateway("openai/gpt-5");
+
 
         const result = streamText({
           model,

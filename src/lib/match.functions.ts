@@ -53,7 +53,8 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3-flash-preview");
+    const model = gateway("openai/gpt-5");
+
 
     const { output } = await generateText({
       model,

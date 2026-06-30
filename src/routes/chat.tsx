@@ -7,9 +7,9 @@ import { Send, Loader2, Sparkles } from "lucide-react";
 export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
-      { title: "AI Career Assistant — CourseCompass NG" },
+      { title: "AI Career Assistant — CourseCompass" },
       { name: "description", content: "Ask anything about Nigerian university courses, careers, salaries and skills. Get empathetic, AI-powered guidance." },
-      { property: "og:title", content: "AI Career Assistant — CourseCompass NG" },
+      { property: "og:title", content: "AI Career Assistant — CourseCompass" },
       { property: "og:description", content: "Empathetic AI guidance for Nigerian students about courses and careers." },
     ],
   }),
@@ -54,7 +54,7 @@ function ChatPage() {
           Ask anything about your course or career
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Empathetic, Nigeria-aware answers. Powered by Gemini 3.
+          Empathetic, Nigeria-aware answers. Powered by GPT-5 + Gemini ensemble.
         </p>
       </header>
 

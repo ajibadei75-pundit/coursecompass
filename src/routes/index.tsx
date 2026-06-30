@@ -6,13 +6,13 @@ import { FEATURED_COURSES, slugify } from "@/lib/course-utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CourseCompass Nigeria — Understand Your Course, Build Your Future" },
+      { title: "CourseCompass — Understand Your Course, Build Your Future" },
       {
         name: "description",
         content:
           "Got placed in a course you didn't choose? Discover the real opportunities, salaries, skills and AI impact of every Nigerian university course.",
       },
-      { property: "og:title", content: "CourseCompass Nigeria" },
+      { property: "og:title", content: "CourseCompass" },
       {
         property: "og:description",
         content:
