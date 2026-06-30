@@ -89,6 +89,11 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
     const drafter = gateway("google/gemini-3-flash-preview");
     const verifier = gateway("openai/gpt-5");
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const finalizer = anthropicKey
+      ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
+      : null;
+
 
     const systemPrompt =
       "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
