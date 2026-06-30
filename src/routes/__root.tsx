@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CourseCompass Nigeria — Understand Your Course, Build Your Future" },
+      { title: "CourseCompass — Understand Your Course, Build Your Future" },
       {
         name: "description",
         content:
           "AI-powered Nigerian university course intelligence, career guidance, and skills roadmaps for students who want clarity.",
       },
-      { name: "author", content: "CourseCompass Nigeria" },
-      { property: "og:title", content: "CourseCompass Nigeria" },
+      { name: "author", content: "CourseCompass" },
+      { property: "og:title", content: "CourseCompass" },
       {
         property: "og:description",
         content:

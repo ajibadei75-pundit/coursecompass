@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — CourseCompass Nigeria" },
+      { title: "About — CourseCompass" },
       { name: "description", content: "Why CourseCompass exists: turning course confusion into career clarity for Nigerian students." },
     ],
   }),
@@ -13,14 +13,14 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 prose prose-invert">
-      <h1 className="font-display text-4xl font-semibold">About CourseCompass Nigeria</h1>
+      <h1 className="font-display text-4xl font-semibold">About CourseCompass</h1>
       <p className="text-muted-foreground mt-4 text-lg">
         Every year, millions of Nigerian students walk into universities feeling defeated. They wanted
         Medicine and got Physiology. They wanted Law and got Yoruba. They wanted Computer Science and got
         Statistics. Society told them their course was "useless." Most never recover from that lie.
       </p>
       <p className="text-muted-foreground mt-4">
-        CourseCompass Nigeria exists to end course confusion. We use AI to generate deep, Nigeria-specific
+        CourseCompass exists to end course confusion. We use AI to generate deep, Nigeria-specific
         intelligence on every university course — the real careers, real salaries, real skills, real
         software, real AI impact, and a real 4-year roadmap. Then we let students chat with an empathetic
         AI assistant that actually understands JAMB, NYSC and the Nigerian job market.

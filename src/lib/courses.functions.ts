@@ -100,7 +100,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
         "Software importance must be one of: 'Critical', 'Important', 'Useful'. " +
         "Demand index numbers are 0-100 integers.",
       prompt:
-        `Build the complete CourseCompass Nigeria profile for the course: "${courseName}". ` +
+        `Build the complete CourseCompass profile for the course: "${courseName}". ` +
         `Treat this as a Nigerian undergraduate degree. Give 4-6 misconceptions vs realities, ` +
         `5-8 items in each list, and a 4-year + final-year roadmap students can actually follow. ` +
         `Keep tagline under 12 words.`,

@@ -48,7 +48,7 @@ export function SiteFooter() {
     <footer className="mt-24 border-t border-border/40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
         <div>
-          <span className="font-display text-foreground">CourseCompass Nigeria</span> —
+          <span className="font-display text-foreground">CourseCompass</span> —
           helping students understand their future before it's too late.
         </div>
         <div className="flex items-center gap-4">
