@@ -54,7 +54,7 @@ function ChatPage() {
           Ask anything about your course or career
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Empathetic, Nigeria-aware answers. Powered by Gemini 3.
+          Empathetic, Nigeria-aware answers. Powered by GPT-5 + Gemini ensemble.
         </p>
       </header>
 
