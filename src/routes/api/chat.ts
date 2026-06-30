@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAnthropic } from "@ai-sdk/anthropic";
 
 const SYSTEM_PROMPT = `You are the CourseCompass AI Career Assistant.
 
