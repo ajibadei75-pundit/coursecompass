@@ -27,11 +27,19 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
+        const anthropicKey = process.env.ANTHROPIC_API_KEY;
         const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("openai/gpt-5");
+        // Prefer Claude for empathetic conversational answers when available,
+        // otherwise fall back to GPT-5 via Lovable AI Gateway.
+        let model;
+        if (anthropicKey) {
+          model = createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929");
+        } else {
+          if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+          model = createLovableAiGatewayProvider(key)("openai/gpt-5");
+        }
+
 
 
         const result = streamText({
