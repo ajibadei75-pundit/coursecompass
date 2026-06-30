@@ -138,6 +138,29 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       console.error("Verifier pass failed, using draft:", err);
     }
 
+    // Pass 3 — Claude (Anthropic) final polish & accuracy sweep
+    if (finalizer) {
+      try {
+        const { output: finalized } = await generateText({
+          model: finalizer,
+          temperature: 0.2,
+          system:
+            systemPrompt +
+            " You are the final senior editor. Polish writing, ensure Nigerian context is authentic, " +
+            "remove anything generic, and confirm salaries, JAMB requirements, universities, " +
+            "certifications, and software are accurate. Return the same JSON schema.",
+          prompt:
+            `Course: "${courseName}".\n\nReviewed profile (JSON):\n${JSON.stringify(profile)}\n\n` +
+            `Return the final, publication-ready profile.`,
+          output: Output.object({ schema: ProfileSchema }),
+        });
+        profile = finalized as CourseProfile;
+      } catch (err) {
+        console.error("Claude finalizer failed, keeping verified version:", err);
+      }
+    }
+
+
 
     await supabaseAdmin
       .from("course_profiles")
