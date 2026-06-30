@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { slugify, titleFromSlug, type CourseProfile } from "./course-utils";
 
 const InputSchema = z.object({ slug: z.string().min(1).max(80) });
@@ -88,6 +89,11 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
     const drafter = gateway("google/gemini-3-flash-preview");
     const verifier = gateway("openai/gpt-5");
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const finalizer = anthropicKey
+      ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
+      : null;
+
 
     const systemPrompt =
       "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
@@ -131,6 +137,29 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("Verifier pass failed, using draft:", err);
     }
+
+    // Pass 3 — Claude (Anthropic) final polish & accuracy sweep
+    if (finalizer) {
+      try {
+        const { output: finalized } = await generateText({
+          model: finalizer,
+          temperature: 0.2,
+          system:
+            systemPrompt +
+            " You are the final senior editor. Polish writing, ensure Nigerian context is authentic, " +
+            "remove anything generic, and confirm salaries, JAMB requirements, universities, " +
+            "certifications, and software are accurate. Return the same JSON schema.",
+          prompt:
+            `Course: "${courseName}".\n\nReviewed profile (JSON):\n${JSON.stringify(profile)}\n\n` +
+            `Return the final, publication-ready profile.`,
+          output: Output.object({ schema: ProfileSchema }),
+        });
+        profile = finalized as CourseProfile;
+      } catch (err) {
+        console.error("Claude finalizer failed, keeping verified version:", err);
+      }
+    }
+
 
 
     await supabaseAdmin
