@@ -30,7 +30,8 @@ export const Route = createFileRoute("/api/chat")({
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const model = gateway("openai/gpt-5");
+
 
         const result = streamText({
           model,
