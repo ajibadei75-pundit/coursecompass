@@ -86,19 +86,23 @@ export const getCourseProfile = createServerFn({ method: "POST" })
 
     const courseName = titleFromSlug(slug);
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3-flash-preview");
+    const drafter = gateway("google/gemini-3-flash-preview");
+    const verifier = gateway("openai/gpt-5");
 
-    const { output } = await generateText({
-      model,
+    const systemPrompt =
+      "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
+      "Generate accurate, encouraging, Nigeria-specific course intelligence. " +
+      "Salaries must be realistic Nigerian Naira ranges (e.g. '₦80,000 – ₦150,000 / month'). " +
+      "Use real Nigerian universities (UI, UNILAG, OAU, UNN, ABU, FUTA, UNIBEN, UNILORIN, COOU, BUK, etc.). " +
+      "Be concrete, never fluffy. 'AI risk' must be one of: 'Very Safe', 'Safe', 'Medium', 'High Risk'. " +
+      "Software importance must be one of: 'Critical', 'Important', 'Useful'. " +
+      "Demand index numbers are 0-100 integers.";
+
+    // Pass 1 — Gemini drafts the profile (fast, broad)
+    const { output: draft } = await generateText({
+      model: drafter,
       temperature: 0.4,
-      system:
-        "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
-        "Generate accurate, encouraging, Nigeria-specific course intelligence. " +
-        "Salaries should be realistic Nigerian Naira ranges (e.g. '₦80,000 – ₦150,000 / month'). " +
-        "Include real Nigerian universities (UI, UNILAG, OAU, UNN, ABU, FUTA, UNIBEN, UNILORIN, COOU, BUK, etc.). " +
-        "Be concrete, never fluffy. 'AI risk' must be one of: 'Very Safe', 'Safe', 'Medium', 'High Risk'. " +
-        "Software importance must be one of: 'Critical', 'Important', 'Useful'. " +
-        "Demand index numbers are 0-100 integers.",
+      system: systemPrompt,
       prompt:
         `Build the complete CourseCompass profile for the course: "${courseName}". ` +
         `Treat this as a Nigerian undergraduate degree. Give 4-6 misconceptions vs realities, ` +
@@ -107,7 +111,27 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       output: Output.object({ schema: ProfileSchema }),
     });
 
-    const profile = output as CourseProfile;
+    // Pass 2 — GPT-5 fact-checks, corrects errors, tightens claims
+    let profile = draft as CourseProfile;
+    try {
+      const { output: verified } = await generateText({
+        model: verifier,
+        temperature: 0.2,
+        system:
+          systemPrompt +
+          " You are now a senior fact-checker. Review the draft course profile and return a corrected, " +
+          "more accurate version. Fix unrealistic salaries, wrong universities, fake certifications, " +
+          "outdated software, and any inaccurate JAMB subject combinations. Keep the same JSON schema.",
+        prompt:
+          `Course: "${courseName}".\n\nDraft profile (JSON):\n${JSON.stringify(draft)}\n\n` +
+          `Return the corrected profile.`,
+        output: Output.object({ schema: ProfileSchema }),
+      });
+      profile = verified as CourseProfile;
+    } catch (err) {
+      console.error("Verifier pass failed, using draft:", err);
+    }
+
 
     await supabaseAdmin
       .from("course_profiles")
