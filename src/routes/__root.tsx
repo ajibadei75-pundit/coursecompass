@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "AI-powered Nigerian university course intelligence, career guidance, and skills roadmaps for students who want clarity.",
       },
       { name: "author", content: "CourseCompass" },
-      { property: "og:title", content: "CourseCompass" },
+      { property: "og:title", content: "CourseCompass — Understand Your Course, Build Your Future" },
       {
         property: "og:description",
         content:
@@ -93,6 +93,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "CourseCompass — Understand Your Course, Build Your Future" },
+      { name: "description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
+      { property: "og:description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
+      { name: "twitter:description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
