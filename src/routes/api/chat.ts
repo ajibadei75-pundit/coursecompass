@@ -72,7 +72,6 @@ export const Route = createFileRoute("/api/chat")({
             model: drafterModel,
             system: DRAFTER_SYSTEM_PROMPT,
             messages: modelMessages,
-            temperature: 0.5,
           });
           draft = drafted.text;
         } catch (err) {
@@ -85,7 +84,6 @@ export const Route = createFileRoute("/api/chat")({
           model: validatorModel,
           system: VALIDATOR_SYSTEM_PROMPT,
           prompt: buildValidatorPrompt(userQuestion, draft),
-          temperature: 0.2,
         });
 
         return result.toUIMessageStreamResponse({
