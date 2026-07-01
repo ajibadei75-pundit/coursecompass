@@ -87,8 +87,9 @@ export const getCourseProfile = createServerFn({ method: "POST" })
 
     const courseName = titleFromSlug(slug);
     const gateway = createLovableAiGatewayProvider(key);
+    const strictGateway = createLovableAiGatewayProvider(key, undefined, { structuredOutputs: true });
     const drafter = gateway("google/gemini-3-flash-preview");
-    const verifier = gateway("openai/gpt-5");
+    const verifier = strictGateway("openai/gpt-5");
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const finalizer = anthropicKey
       ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
@@ -104,18 +105,36 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       "Software importance must be one of: 'Critical', 'Important', 'Useful'. " +
       "Demand index numbers are 0-100 integers.";
 
-    // Pass 1 — Gemini drafts the profile (fast, broad)
-    const { output: draft } = await generateText({
-      model: drafter,
-      temperature: 0.4,
-      system: systemPrompt,
-      prompt:
-        `Build the complete CourseCompass profile for the course: "${courseName}". ` +
-        `Treat this as a Nigerian undergraduate degree. Give 4-6 misconceptions vs realities, ` +
-        `5-8 items in each list, and a 4-year + final-year roadmap students can actually follow. ` +
-        `Keep tagline under 12 words.`,
-      output: Output.object({ schema: ProfileSchema }),
-    });
+    const draftPrompt =
+      `Build the complete CourseCompass profile for the course: "${courseName}". ` +
+      `Treat this as a Nigerian undergraduate degree. Give 4-6 misconceptions vs realities, ` +
+      `5-8 items in each list, and a 4-year + final-year roadmap students can actually follow. ` +
+      `Keep tagline under 12 words. Return JSON matching the schema exactly.`;
+
+    // Pass 1 — Gemini drafts (fast). Fall back to GPT-5 with strict json_schema
+    // if Gemini's output doesn't match the schema.
+    let draft: CourseProfile;
+    try {
+      const drafted = await generateText({
+        model: drafter,
+        temperature: 0.4,
+        system: systemPrompt,
+        prompt: draftPrompt,
+        output: Output.object({ schema: ProfileSchema }),
+      });
+      draft = drafted.output as CourseProfile;
+    } catch (err) {
+      console.error("Gemini drafter failed, falling back to GPT-5:", err);
+      const drafted = await generateText({
+        model: verifier,
+        temperature: 0.4,
+        system: systemPrompt,
+        prompt: draftPrompt,
+        output: Output.object({ schema: ProfileSchema }),
+      });
+      draft = drafted.output as CourseProfile;
+    }
+
 
     // Pass 2 — GPT-5 fact-checks, corrects errors, tightens claims
     let profile = draft as CourseProfile;
