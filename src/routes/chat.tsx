@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2, Sparkles, Copy, Check } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -76,22 +78,21 @@ function ChatPage() {
           </div>
         )}
 
-        {messages.map((m) => (
-          <div key={m.id} className={"flex " + (m.role === "user" ? "justify-end" : "justify-start")}>
-            <div
-              className={
-                "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap " +
-                (m.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "glass rounded-bl-sm")
-              }
-            >
-              {m.parts.map((part, i) =>
-                part.type === "text" ? <span key={i}>{part.text}</span> : null,
-              )}
-            </div>
-          </div>
-        ))}
+        {messages.map((m) => {
+          const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+          if (m.role === "user") {
+            return (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+                  {text}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <AssistantMessage key={m.id} text={text} />
+          );
+        })}
 
         {busy && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -129,6 +130,47 @@ function ChatPage() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function AssistantMessage({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+  return (
+    <div className="flex justify-start group">
+      <div className="relative max-w-[92%] glass rounded-2xl rounded-bl-sm px-5 py-4 text-sm leading-relaxed">
+        <div
+          className="prose prose-sm prose-invert max-w-none
+            prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
+            prose-h1:text-lg prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2
+            prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-wider prose-h3:text-gold prose-h3:mt-4 prose-h3:mb-1.5
+            prose-p:my-2 prose-p:text-foreground/90
+            prose-strong:text-foreground prose-strong:font-semibold
+            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+            prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-li:marker:text-gold
+            prose-code:bg-surface-2/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+            prose-blockquote:border-l-2 prose-blockquote:border-gold/60 prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-muted-foreground
+            prose-hr:border-border/50"
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{text || "…"}</ReactMarkdown>
+        </div>
+        {text && (
+          <button
+            onClick={copy}
+            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition rounded-full bg-surface-2 border border-border/60 p-1.5 text-muted-foreground hover:text-foreground"
+            aria-label="Copy response"
+          >
+            {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
