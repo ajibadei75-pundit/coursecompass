@@ -127,7 +127,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       console.error("Gemini drafter failed, falling back to GPT-5:", err);
       const drafted = await generateText({
         model: verifier,
-        temperature: 0.4,
         system: systemPrompt,
         prompt: draftPrompt,
         output: Output.object({ schema: ProfileSchema }),
