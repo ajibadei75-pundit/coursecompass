@@ -78,22 +78,21 @@ function ChatPage() {
           </div>
         )}
 
-        {messages.map((m) => (
-          <div key={m.id} className={"flex " + (m.role === "user" ? "justify-end" : "justify-start")}>
-            <div
-              className={
-                "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap " +
-                (m.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "glass rounded-bl-sm")
-              }
-            >
-              {m.parts.map((part, i) =>
-                part.type === "text" ? <span key={i}>{part.text}</span> : null,
-              )}
-            </div>
-          </div>
-        ))}
+        {messages.map((m) => {
+          const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+          if (m.role === "user") {
+            return (
+              <div key={m.id} className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+                  {text}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <AssistantMessage key={m.id} text={text} />
+          );
+        })}
 
         {busy && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
