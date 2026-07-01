@@ -2,7 +2,11 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 const LOVABLE_AIG_RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
 
-export function createLovableAiGatewayProvider(lovableApiKey: string, initialRunId?: string) {
+export function createLovableAiGatewayProvider(
+  lovableApiKey: string,
+  initialRunId?: string,
+  options?: { structuredOutputs?: boolean },
+) {
   let runId = initialRunId?.trim() || undefined;
   let resolveRunId: (value: string | undefined) => void = () => {};
   let runIdResolved = false;
