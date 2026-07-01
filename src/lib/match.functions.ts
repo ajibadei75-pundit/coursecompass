@@ -52,7 +52,7 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    const gateway = createLovableAiGatewayProvider(key);
+    const gateway = createLovableAiGatewayProvider(key, undefined, { structuredOutputs: true });
     const model = gateway("openai/gpt-5");
 
 
