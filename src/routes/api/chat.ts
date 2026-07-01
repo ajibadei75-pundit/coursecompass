@@ -75,8 +75,21 @@ export const Route = createFileRoute("/api/chat")({
           });
           draft = drafted.text;
         } catch (err) {
-          console.error("Drafter pass failed:", err);
-          return new Response("Drafter failed", { status: 502 });
+          console.error("Drafter pass failed, falling back to GPT-5:", err);
+          if (!gateway) {
+            return new Response("Drafter failed", { status: 502 });
+          }
+          try {
+            const drafted = await generateText({
+              model: gateway("openai/gpt-5"),
+              system: DRAFTER_SYSTEM_PROMPT,
+              messages: modelMessages,
+            });
+            draft = drafted.text;
+          } catch (err2) {
+            console.error("GPT-5 drafter fallback failed:", err2);
+            return new Response("Drafter failed", { status: 502 });
+          }
         }
 
         // Pass 2 — validator streams the final, house-style answer
