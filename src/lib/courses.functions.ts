@@ -127,7 +127,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       console.error("Gemini drafter failed, falling back to GPT-5:", err);
       const drafted = await generateText({
         model: verifier,
-        temperature: 0.4,
         system: systemPrompt,
         prompt: draftPrompt,
         output: Output.object({ schema: ProfileSchema }),
@@ -141,7 +140,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     try {
       const { output: verified } = await generateText({
         model: verifier,
-        temperature: 0.2,
         system:
           systemPrompt +
           " You are now a senior fact-checker. Review the draft course profile and return a corrected, " +

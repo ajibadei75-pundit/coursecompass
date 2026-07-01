@@ -58,7 +58,6 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
 
     const { output } = await generateText({
       model,
-      temperature: 0.5,
       system:
         "You are a Nigerian career counsellor for university aspirants. " +
         "Given trait scores (0-100) for a student, recommend Nigerian university courses they should consider. " +
