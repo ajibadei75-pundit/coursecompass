@@ -140,7 +140,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     try {
       const { output: verified } = await generateText({
         model: verifier,
-        temperature: 0.2,
         system:
           systemPrompt +
           " You are now a senior fact-checker. Review the draft course profile and return a corrected, " +
