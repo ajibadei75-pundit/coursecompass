@@ -117,7 +117,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     try {
       const drafted = await generateText({
         model: drafter,
-        temperature: 0.4,
         system: systemPrompt,
         prompt: draftPrompt,
         output: Output.object({ schema: ProfileSchema }),
@@ -160,7 +159,6 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       try {
         const { output: finalized } = await generateText({
           model: finalizer,
-          temperature: 0.2,
           system:
             systemPrompt +
             " You are the final senior editor. Polish writing, ensure Nigerian context is authentic, " +
