@@ -48,8 +48,8 @@ export const Route = createFileRoute("/api/chat")({
 
         // Use Gemini Flash models — highest rate limits on Lovable AI Gateway.
         // Drafter (Flash Lite) is fast and cheap; validator (Flash) polishes structure.
-        const drafterModel = gateway("google/gemini-2.5-flash-lite");
-        const validatorModel = gateway("google/gemini-2.5-flash");
+        const drafterModel = gateway("google/gemini-flash-lite-latest");
+        const validatorModel = gateway("google/gemini-flash-latest");
 
         const messages = body.messages as UIMessage[];
         const userQuestion = extractLastUserText(messages);

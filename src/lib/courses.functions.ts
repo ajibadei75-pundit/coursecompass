@@ -89,8 +89,8 @@ export const getCourseProfile = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
     // Use Gemini Flash Lite/Flash — highest rate limits on Lovable AI Gateway.
     // Avoids GPT-5 and Claude quota walls that caused prior 429/502 failures.
-    const drafter = gateway("google/gemini-2.5-flash-lite");
-    const verifier = gateway("google/gemini-2.5-flash");
+    const drafter = gateway("google/gemini-flash-lite-latest");
+    const verifier = gateway("google/gemini-flash-latest");
 
     const systemPrompt =
       "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
