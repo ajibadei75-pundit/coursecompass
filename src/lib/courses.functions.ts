@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-import { createAnthropic } from "@ai-sdk/anthropic";
+
 import { slugify, titleFromSlug, type CourseProfile } from "./course-utils";
 
 const InputSchema = z.object({ slug: z.string().min(1).max(80) });
@@ -87,14 +87,10 @@ export const getCourseProfile = createServerFn({ method: "POST" })
 
     const courseName = titleFromSlug(slug);
     const gateway = createLovableAiGatewayProvider(key);
-    const strictGateway = createLovableAiGatewayProvider(key, undefined, { structuredOutputs: true });
-    const drafter = gateway("google/gemini-3-flash-preview");
-    const verifier = strictGateway("openai/gpt-5");
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    const finalizer = anthropicKey
-      ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
-      : null;
-
+    // Use Gemini Flash Lite/Flash — highest rate limits on Lovable AI Gateway.
+    // Avoids GPT-5 and Claude quota walls that caused prior 429/502 failures.
+    const drafter = gateway("google/gemini-3.1-flash-lite");
+    const verifier = gateway("google/gemini-3.5-flash");
 
     const systemPrompt =
       "You are a Nigerian university course expert, career counsellor and labor-market analyst. " +
@@ -111,8 +107,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       `5-8 items in each list, and a 4-year + final-year roadmap students can actually follow. ` +
       `Keep tagline under 12 words. Return JSON matching the schema exactly.`;
 
-    // Pass 1 — Gemini drafts (fast). Fall back to GPT-5 with strict json_schema
-    // if Gemini's output doesn't match the schema.
+    // Pass 1 — Flash Lite drafts (fast, high rate limits).
     let draft: CourseProfile;
     try {
       const drafted = await generateText({
@@ -123,7 +118,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       });
       draft = drafted.output as CourseProfile;
     } catch (err) {
-      console.error("Gemini drafter failed, falling back to GPT-5:", err);
+      console.error("Drafter failed, falling back to verifier model:", err);
       const drafted = await generateText({
         model: verifier,
         system: systemPrompt,
@@ -133,8 +128,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       draft = drafted.output as CourseProfile;
     }
 
-
-    // Pass 2 — GPT-5 fact-checks, corrects errors, tightens claims
+    // Pass 2 — Flash verifies & tightens the draft.
     let profile = draft as CourseProfile;
     try {
       const { output: verified } = await generateText({
@@ -154,26 +148,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       console.error("Verifier pass failed, using draft:", err);
     }
 
-    // Pass 3 — Claude (Anthropic) final polish & accuracy sweep
-    if (finalizer) {
-      try {
-        const { output: finalized } = await generateText({
-          model: finalizer,
-          system:
-            systemPrompt +
-            " You are the final senior editor. Polish writing, ensure Nigerian context is authentic, " +
-            "remove anything generic, and confirm salaries, JAMB requirements, universities, " +
-            "certifications, and software are accurate. Return the same JSON schema.",
-          prompt:
-            `Course: "${courseName}".\n\nReviewed profile (JSON):\n${JSON.stringify(profile)}\n\n` +
-            `Return the final, publication-ready profile.`,
-          output: Output.object({ schema: ProfileSchema }),
-        });
-        profile = finalized as CourseProfile;
-      } catch (err) {
-        console.error("Claude finalizer failed, keeping verified version:", err);
-      }
-    }
+
 
 
 

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, generateText, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { createAnthropic } from "@ai-sdk/anthropic";
+
 import {
   COURSECOMPASS_STYLE_RULES,
   VALIDATOR_SYSTEM_PROMPT,
@@ -40,26 +40,16 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
-        const anthropicKey = process.env.ANTHROPIC_API_KEY;
         const key = process.env.LOVABLE_API_KEY;
-
-        // Drafter: Claude when available (warmer), GPT-5 fallback.
-        // Validator: always GPT-5 (consistent structural enforcement).
         const gateway = key ? createLovableAiGatewayProvider(key) : null;
-        const drafterModel = anthropicKey
-          ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
-          : gateway
-            ? gateway("openai/gpt-5")
-            : null;
-        const validatorModel = gateway
-          ? gateway("openai/gpt-5")
-          : anthropicKey
-            ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
-            : null;
-
-        if (!drafterModel || !validatorModel) {
+        if (!gateway) {
           return new Response("Missing AI credentials", { status: 500 });
         }
+
+        // Use Gemini Flash models — highest rate limits on Lovable AI Gateway.
+        // Drafter (Flash Lite) is fast and cheap; validator (Flash) polishes structure.
+        const drafterModel = gateway("google/gemini-3.1-flash-lite");
+        const validatorModel = gateway("google/gemini-3.5-flash");
 
         const messages = body.messages as UIMessage[];
         const userQuestion = extractLastUserText(messages);
@@ -75,21 +65,8 @@ export const Route = createFileRoute("/api/chat")({
           });
           draft = drafted.text;
         } catch (err) {
-          console.error("Drafter pass failed, falling back to GPT-5:", err);
-          if (!gateway) {
-            return new Response("Drafter failed", { status: 502 });
-          }
-          try {
-            const drafted = await generateText({
-              model: gateway("openai/gpt-5"),
-              system: DRAFTER_SYSTEM_PROMPT,
-              messages: modelMessages,
-            });
-            draft = drafted.text;
-          } catch (err2) {
-            console.error("GPT-5 drafter fallback failed:", err2);
-            return new Response("Drafter failed", { status: 502 });
-          }
+          console.error("Drafter pass failed:", err);
+          return new Response("Drafter failed", { status: 502 });
         }
 
         // Pass 2 — validator streams the final, house-style answer

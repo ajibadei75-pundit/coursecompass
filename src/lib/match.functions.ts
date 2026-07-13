@@ -52,8 +52,9 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    const gateway = createLovableAiGatewayProvider(key, undefined, { structuredOutputs: true });
-    const model = gateway("openai/gpt-5");
+    // Gemini Flash — high rate limits, native JSON schema support (no strict mode needed).
+    const gateway = createLovableAiGatewayProvider(key);
+    const model = gateway("google/gemini-3.5-flash");
 
 
     const { output } = await generateText({
