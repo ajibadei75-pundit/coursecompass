@@ -67,8 +67,6 @@ export const Route = createFileRoute("/api/chat")({
         } catch (err) {
           console.error("Drafter pass failed:", err);
           return new Response("Drafter failed", { status: 502 });
-            return new Response("Drafter failed", { status: 502 });
-          }
         }
 
         // Pass 2 — validator streams the final, house-style answer
