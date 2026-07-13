@@ -1,55 +1,41 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-const LOVABLE_AIG_RUN_ID_HEADER = "X-Lovable-AIG-Run-ID";
-
+/**
+ * Provider that talks directly to Google's Gemini API via its
+ * OpenAI-compatible endpoint. Uses the user's own GEMINI_API_KEY
+ * (free tier from https://aistudio.google.com/apikey), bypassing
+ * Lovable AI Gateway credits entirely.
+ *
+ * Model ids passed in as "google/gemini-..." are normalised to the
+ * bare Gemini name Google's API expects.
+ */
 export function createLovableAiGatewayProvider(
-  lovableApiKey: string,
-  initialRunId?: string,
-  options?: { structuredOutputs?: boolean },
+  _lovableApiKey: string,
+  _initialRunId?: string,
+  _options?: { structuredOutputs?: boolean },
 ) {
-  let runId = initialRunId?.trim() || undefined;
-  let resolveRunId: (value: string | undefined) => void = () => {};
-  let runIdResolved = false;
-  const runIdReady = new Promise<string | undefined>((resolve) => {
-    resolveRunId = resolve;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Missing GEMINI_API_KEY. Get a free key at https://aistudio.google.com/apikey.",
+    );
+  }
+
+  const raw = createOpenAICompatible({
+    name: "gemini",
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+    supportsStructuredOutputs: true,
+    headers: { Authorization: `Bearer ${apiKey}` },
   });
 
-  const publishRunId = (value?: string) => {
-    const nextRunId = value?.trim() || undefined;
-    if (!runId && nextRunId) runId = nextRunId;
-    if (!runIdResolved) {
-      runIdResolved = true;
-      resolveRunId(runId);
-    }
-  };
-  if (runId) publishRunId(runId);
-
-  const provider = createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    supportsStructuredOutputs: options?.structuredOutputs ?? false,
-    headers: {
-      "Lovable-API-Key": lovableApiKey,
-      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-    },
-    fetch: async (input, init) => {
-      const headers = new Headers(init?.headers);
-      if (runId && !headers.has(LOVABLE_AIG_RUN_ID_HEADER)) {
-        headers.set(LOVABLE_AIG_RUN_ID_HEADER, runId);
-      }
-      try {
-        const response = await fetch(input, { ...init, headers });
-        publishRunId(response.headers.get(LOVABLE_AIG_RUN_ID_HEADER) ?? undefined);
-        return response;
-      } catch (error) {
-        publishRunId(undefined);
-        throw error;
-      }
-    },
-  });
+  // Wrap to strip the "google/" prefix so "google/gemini-2.5-flash" -> "gemini-2.5-flash".
+  const provider = ((modelId: string) => {
+    const normalized = modelId.startsWith("google/") ? modelId.slice("google/".length) : modelId;
+    return raw(normalized);
+  }) as unknown as ReturnType<typeof createOpenAICompatible>;
 
   return Object.assign(provider, {
-    getRunId: () => runId,
-    waitForRunId: () => (runId ? Promise.resolve(runId) : runIdReady),
+    getRunId: () => undefined as string | undefined,
+    waitForRunId: async () => undefined as string | undefined,
   });
 }
