@@ -54,7 +54,7 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
 
     // Gemini Flash — high rate limits, native JSON schema support (no strict mode needed).
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3.5-flash");
+    const model = gateway("google/gemini-2.5-flash");
 
 
     const { output } = await generateText({
