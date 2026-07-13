@@ -87,13 +87,11 @@ export const getCourseProfile = createServerFn({ method: "POST" })
 
     const courseName = titleFromSlug(slug);
     const gateway = createLovableAiGatewayProvider(key);
-    const strictGateway = createLovableAiGatewayProvider(key, undefined, { structuredOutputs: true });
-    const drafter = gateway("google/gemini-3-flash-preview");
-    const verifier = strictGateway("openai/gpt-5");
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    const finalizer = anthropicKey
-      ? createAnthropic({ apiKey: anthropicKey })("claude-sonnet-4-5-20250929")
-      : null;
+    // Use Gemini Flash Lite/Flash — highest rate limits on Lovable AI Gateway.
+    // Avoids GPT-5 and Claude quota walls that caused prior 429/502 failures.
+    const drafter = gateway("google/gemini-3.1-flash-lite");
+    const verifier = gateway("google/gemini-3.5-flash");
+    const finalizer = null;
 
 
     const systemPrompt =
