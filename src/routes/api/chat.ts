@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, generateText, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { createAnthropic } from "@ai-sdk/anthropic";
+
 import {
   COURSECOMPASS_STYLE_RULES,
   VALIDATOR_SYSTEM_PROMPT,
