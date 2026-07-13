@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-import { createAnthropic } from "@ai-sdk/anthropic";
+
 import { slugify, titleFromSlug, type CourseProfile } from "./course-utils";
 
 const InputSchema = z.object({ slug: z.string().min(1).max(80) });
