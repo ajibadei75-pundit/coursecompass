@@ -63,7 +63,7 @@ CITATION RULES
 - If the student asked about a specific course, include a link in the form /courses/<slug> (kebab-case slug) in Key points or Next steps.
 
 LENGTH
-- 180–450 words total. Cut filler before adding new content.
+- 220–500 words total (the roadmap table does not count). Cut filler before adding new content.
 - Never repeat the same point in two sections.
 
 FORBIDDEN

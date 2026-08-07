@@ -157,6 +157,11 @@ function AssistantMessage({ text }: { text: string }) {
             prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-li:marker:text-gold
             prose-code:bg-surface-2/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
             prose-blockquote:border-l-2 prose-blockquote:border-gold/60 prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-muted-foreground
+            prose-table:my-3 prose-table:text-xs prose-table:block prose-table:overflow-x-auto
+            prose-thead:border-b prose-thead:border-border/60
+            prose-th:text-gold prose-th:font-medium prose-th:uppercase prose-th:tracking-wider prose-th:text-[10px] prose-th:py-1.5 prose-th:pr-3 prose-th:text-left
+            prose-td:py-1.5 prose-td:pr-3 prose-td:align-top prose-td:text-foreground/90
+            prose-tr:border-b prose-tr:border-border/30
             prose-hr:border-border/50"
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{text || "…"}</ReactMarkdown>
