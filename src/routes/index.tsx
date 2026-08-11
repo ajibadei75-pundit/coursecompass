@@ -35,15 +35,35 @@ function LandingPage() {
   );
 }
 
+const SCAN_STEPS = [
+  "Locating course…",
+  "Reading Nigerian job data…",
+  "Mapping careers & salaries…",
+  "Building your roadmap…",
+];
+
 function Hero() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [launching, setLaunching] = useState(false);
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!launching) return;
+    const id = setInterval(() => setStep((s) => (s + 1) % SCAN_STEPS.length), 420);
+    return () => clearInterval(id);
+  }, [launching]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (launching) return;
     const slug = slugify(q);
     if (!slug) return;
-    navigate({ to: "/courses/$slug", params: { slug } });
+    setStep(0);
+    setLaunching(true);
+    window.setTimeout(() => {
+      navigate({ to: "/courses/$slug", params: { slug } });
+    }, 1250);
   };
 
   return (
@@ -64,22 +84,81 @@ function Hero() {
           </p>
 
           <form onSubmit={onSubmit} className="mt-8 flex gap-2 max-w-xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <div
+              className={`relative flex-1 rounded-lg overflow-hidden transition-shadow ${
+                launching ? "glow-ring" : ""
+              }`}
+            >
+              <Search
+                className={`absolute left-3 top-1/2 -translate-y-1/2 size-4 z-10 ${
+                  launching ? "text-primary animate-pulse" : "text-muted-foreground"
+                }`}
+              />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+                disabled={launching}
                 placeholder="Type any course: e.g. Physiology, Statistics, Mass Comm..."
-                className="w-full glass rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60"
+                className="w-full glass rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:opacity-70"
               />
+              {launching && (
+                <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 scan-sweep bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+              )}
             </div>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+              disabled={launching}
+              className={`relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-transform hover:opacity-90 active:scale-95 ${
+                launching ? "pulse-ring" : ""
+              }`}
             >
-              Analyze <ArrowRight className="size-4" />
+              {launching ? (
+                <>
+                  Analyzing
+                  <span className="inline-flex gap-0.5">
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="size-1 rounded-full bg-primary-foreground"
+                        style={{ animation: `cc-dot-bounce 1s ${i * 0.15}s infinite` }}
+                      />
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <>
+                  Analyze <ArrowRight className="size-4" />
+                </>
+              )}
+              {launching && (
+                <>
+                  <Rocket className="absolute right-3 size-4 rocket-launch" />
+                  {[
+                    { sx: "18px", sy: "-16px" },
+                    { sx: "-14px", sy: "-18px" },
+                    { sx: "12px", sy: "14px" },
+                    { sx: "-16px", sy: "12px" },
+                  ].map((s, i) => (
+                    <span
+                      key={i}
+                      className="pointer-events-none absolute left-1/2 top-1/2 size-1 rounded-full bg-primary-foreground spark-fly"
+                      style={{ ["--sx" as string]: s.sx, ["--sy" as string]: s.sy, animationDelay: `${i * 60}ms` }}
+                    />
+                  ))}
+                </>
+              )}
             </button>
           </form>
+
+          <div
+            className={`mt-3 text-xs text-primary transition-all duration-300 ${
+              launching ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 h-0"
+            }`}
+            aria-live="polite"
+          >
+            {launching ? SCAN_STEPS[step] : ""}
+          </div>
+
 
           <div className="mt-4 flex flex-wrap gap-2">
             {["physiology", "medical-laboratory-science", "statistics", "mass-communication", "yoruba"].map(
