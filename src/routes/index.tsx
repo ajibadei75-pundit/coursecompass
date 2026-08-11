@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { ArrowRight, Sparkles, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Sparkles, Rocket, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
 import { FEATURED_COURSES, slugify } from "@/lib/course-utils";
 
 export const Route = createFileRoute("/")({
