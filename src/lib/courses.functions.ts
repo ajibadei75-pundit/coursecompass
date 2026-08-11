@@ -82,6 +82,11 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       return { slug: existing.slug, title: existing.title, profile: existing.data as CourseProfile };
     }
 
+    // Only uncached (AI-generating) requests are rate limited: 5 per IP per 10 minutes.
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { enforceRateLimit } = await import("./rate-limit.server");
+    enforceRateLimit(getRequest(), "course-profile", { limit: 5, windowMs: 600_000 });
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
