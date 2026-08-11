@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, generateText, streamText, type UIMessage } from "ai";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { checkRateLimit, clientIpFromRequest } from "@/lib/rate-limit.server";
 
 import {
   COURSECOMPASS_STYLE_RULES,
