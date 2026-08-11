@@ -31,13 +31,36 @@ function extractLastUserText(messages: UIMessage[]): string {
   return "";
 }
 
+const MAX_MESSAGES = 40;
+const MAX_CHARS = 8000;
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Abuse protection: 15 chat requests per IP per minute.
+        const { allowed, retryAfterSeconds } = checkRateLimit(
+          `chat:${clientIpFromRequest(request)}`,
+          { limit: 15, windowMs: 60_000 },
+        );
+        if (!allowed) {
+          return new Response("Too many requests. Please slow down.", {
+            status: 429,
+            headers: { "retry-after": String(retryAfterSeconds) },
+          });
+        }
+
+        if ((request.headers.get("content-length") ?? "0").length > 0) {
+          const len = Number(request.headers.get("content-length") ?? 0);
+          if (len > 200_000) return new Response("Payload too large", { status: 413 });
+        }
+
         const body = (await request.json().catch(() => ({}))) as { messages?: unknown };
         if (!Array.isArray(body.messages)) {
           return new Response("Messages are required", { status: 400 });
+        }
+        if (body.messages.length === 0 || body.messages.length > MAX_MESSAGES) {
+          return new Response("Invalid conversation length", { status: 400 });
         }
 
         const key = process.env.LOVABLE_API_KEY;
@@ -52,7 +75,10 @@ export const Route = createFileRoute("/api/chat")({
         const validatorModel = gateway("google/gemini-flash-latest");
 
         const messages = body.messages as UIMessage[];
-        const userQuestion = extractLastUserText(messages);
+        const userQuestion = extractLastUserText(messages).slice(0, MAX_CHARS);
+        if (!userQuestion) {
+          return new Response("Empty question", { status: 400 });
+        }
         const modelMessages = await convertToModelMessages(messages);
 
         // Pass 1 — draft (non-streaming so the validator can rewrite it whole)
