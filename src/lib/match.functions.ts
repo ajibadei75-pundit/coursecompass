@@ -49,6 +49,11 @@ const OutputSchema = z.object({
 export const analyzeMatchQuiz = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }) => {
+    // Abuse protection: 8 quiz analyses per IP per 10 minutes.
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { enforceRateLimit } = await import("./rate-limit.server");
+    enforceRateLimit(getRequest(), "match-quiz", { limit: 8, windowMs: 600_000 });
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
