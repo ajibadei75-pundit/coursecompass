@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, Rocket, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
+import { ArrowRight, Sparkles, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
 import { FEATURED_COURSES, slugify } from "@/lib/course-utils";
+import { DragAnalyze } from "@/components/site/DragAnalyze";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,8 +56,7 @@ function Hero() {
     return () => clearInterval(id);
   }, [launching]);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const startAnalysis = () => {
     if (launching) return;
     const slug = slugify(q);
     if (!slug) return;
@@ -65,6 +66,12 @@ function Hero() {
       navigate({ to: "/courses/$slug", params: { slug } });
     }, 1250);
   };
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startAnalysis();
+  };
+
 
   return (
     <section className="relative">
