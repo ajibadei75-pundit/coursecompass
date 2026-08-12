@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Sparkles, Rocket, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
+import { ArrowRight, Sparkles, Search, Compass, Brain, MessageSquare, Briefcase, ShieldCheck } from "lucide-react";
 import { FEATURED_COURSES, slugify } from "@/lib/course-utils";
+import { DragAnalyze } from "@/components/site/DragAnalyze";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,8 +56,7 @@ function Hero() {
     return () => clearInterval(id);
   }, [launching]);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const startAnalysis = () => {
     if (launching) return;
     const slug = slugify(q);
     if (!slug) return;
@@ -65,6 +66,12 @@ function Hero() {
       navigate({ to: "/courses/$slug", params: { slug } });
     }, 1250);
   };
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startAnalysis();
+  };
+
 
   return (
     <section className="relative">
@@ -83,9 +90,9 @@ function Hero() {
             and the world.
           </p>
 
-          <form onSubmit={onSubmit} className="mt-8 flex gap-2 max-w-xl">
+          <form onSubmit={onSubmit} className="mt-8 max-w-xl space-y-3">
             <div
-              className={`relative flex-1 rounded-lg overflow-hidden transition-shadow ${
+              className={`relative rounded-lg overflow-hidden transition-shadow ${
                 launching ? "glow-ring" : ""
               }`}
             >
@@ -105,49 +112,12 @@ function Hero() {
                 <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 scan-sweep bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
               )}
             </div>
-            <button
-              type="submit"
-              disabled={launching}
-              className={`relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-transform hover:opacity-90 active:scale-95 ${
-                launching ? "pulse-ring" : ""
-              }`}
-            >
-              {launching ? (
-                <>
-                  Analyzing
-                  <span className="inline-flex gap-0.5">
-                    {[0, 1, 2].map((i) => (
-                      <span
-                        key={i}
-                        className="size-1 rounded-full bg-primary-foreground"
-                        style={{ animation: `cc-dot-bounce 1s ${i * 0.15}s infinite` }}
-                      />
-                    ))}
-                  </span>
-                </>
-              ) : (
-                <>
-                  Analyze <ArrowRight className="size-4" />
-                </>
-              )}
-              {launching && (
-                <>
-                  <Rocket className="absolute right-3 size-4 rocket-launch" />
-                  {[
-                    { sx: "18px", sy: "-16px" },
-                    { sx: "-14px", sy: "-18px" },
-                    { sx: "12px", sy: "14px" },
-                    { sx: "-16px", sy: "12px" },
-                  ].map((s, i) => (
-                    <span
-                      key={i}
-                      className="pointer-events-none absolute left-1/2 top-1/2 size-1 rounded-full bg-primary-foreground spark-fly"
-                      style={{ ["--sx" as string]: s.sx, ["--sy" as string]: s.sy, animationDelay: `${i * 60}ms` }}
-                    />
-                  ))}
-                </>
-              )}
-            </button>
+
+            <DragAnalyze
+              busy={launching}
+              disabled={!q.trim()}
+              onComplete={startAnalysis}
+            />
           </form>
 
           <div
@@ -158,6 +128,7 @@ function Hero() {
           >
             {launching ? SCAN_STEPS[step] : ""}
           </div>
+
 
 
           <div className="mt-4 flex flex-wrap gap-2">
