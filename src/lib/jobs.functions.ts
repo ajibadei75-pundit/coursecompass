@@ -1,0 +1,53 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+const InputSchema = z.object({
+  course: z.string().min(2).max(120),
+  skills: z.array(z.string().max(40)).max(15).default([]),
+  location: z.string().max(80).default(""),
+  remoteOnly: z.boolean().default(false),
+});
+
+export const searchJobsForCourse = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { enforceRateLimit } = await import("./rate-limit.server");
+    enforceRateLimit(getRequest(), "job-search", { limit: 20, windowMs: 600_000 });
+
+    const { aggregateJobs, scoreJobs } = await import("./jobs.server");
+    const { fallbackRoles } = await import("./jobs-utils");
+
+    let roles = fallbackRoles(data.course);
+    let notice: string | undefined;
+
+    try {
+      const { generateText, Output } = await import("ai");
+      const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
+      const gateway = createLovableAiGatewayProvider(process.env.LOVABLE_API_KEY ?? "", undefined, {
+        structuredOutputs: true,
+      });
+      const { output } = await generateText({
+        model: gateway("google/gemini-flash-lite-latest"),
+        system:
+          "You map Nigerian university courses plus a student's extra skills to realistic job titles used on job boards. " +
+          "Return 6 concrete, searchable job titles (no seniority fluff), ordered by best fit.",
+        prompt: `Course: ${data.course}. Extra skills: ${data.skills.join(", ") || "none"}. Preferred location: ${data.location || "Nigeria / remote"}.`,
+        output: Output.object({ schema: z.object({ roles: z.array(z.string()).min(3).max(8) }) }),
+      });
+      const ai = (output as { roles: string[] }).roles.filter(Boolean);
+      if (ai.length) roles = ai;
+    } catch {
+      notice = "Using our built-in course→role map (AI matcher unavailable right now).";
+    }
+
+    const pool = await aggregateJobs(roles, data.skills);
+    const jobs = scoreJobs(pool, roles, data.skills, data.location, data.remoteOnly);
+
+    return {
+      roles,
+      keywords: [...roles, ...data.skills],
+      jobs,
+      notice: jobs.length ? notice : notice ?? "No live matches right now — try the platform links below.",
+    };
+  });
