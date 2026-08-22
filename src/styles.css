@@ -157,3 +157,95 @@
 @utility spark-fly {
   animation: cc-spark-fly 0.7s ease-out forwards;
 }
+
+/* ---- Brand gradients, motion & form primitives ---- */
+@utility text-gradient-brand {
+  background-image: linear-gradient(
+    100deg,
+    var(--primary) 0%,
+    color-mix(in oklab, var(--primary) 55%, var(--gold)) 55%,
+    var(--gold) 100%
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-gradient-brand {
+  background-image: linear-gradient(
+    100deg,
+    var(--primary) 0%,
+    color-mix(in oklab, var(--primary) 70%, var(--gold)) 100%
+  );
+}
+
+@utility input-field {
+  width: 100%;
+  border-radius: var(--radius-md);
+  background-color: color-mix(in oklab, var(--surface-2) 60%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 18%, transparent);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  &:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 25%, transparent);
+  }
+}
+
+@keyframes cc-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cc-scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes cc-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@utility animate-fade-in {
+  animation: cc-fade-in 0.45s ease-out both;
+}
+@utility animate-scale-in {
+  animation: cc-scale-in 0.2s ease-out both;
+}
+@utility hover-scale {
+  transition: transform 0.2s ease;
+  &:hover { transform: scale(1.05); }
+}
+@utility shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--primary) 12%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 800px 100%;
+  animation: cc-shimmer 1.4s linear infinite;
+}
+@utility story-link {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.35rem;
+    height: 1.5px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.25s ease;
+  }
+  &:hover::after { transform: scaleX(1); transform-origin: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
