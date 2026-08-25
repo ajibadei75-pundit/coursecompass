@@ -1,10 +1,12 @@
+export type JobSource = "Remotive" | "Arbeitnow" | "Jobicy" | "Remote OK" | "The Muse";
+
 export type JobHit = {
   id: string;
   title: string;
   company: string;
   location: string;
   remote: boolean;
-  source: "Remotive" | "Arbeitnow" | "Jobicy";
+  source: JobSource;
   url: string;
   postedAt?: string;
   salary?: string;
@@ -18,8 +20,12 @@ export type JobSearchResult = {
   keywords: string[];
   roles: string[];
   jobs: JobHit[];
+  fetchedAt: string;
+  sources: { name: JobSource; count: number }[];
   notice?: string;
 };
+
+export const ALL_SOURCES: JobSource[] = ["Remotive", "Jobicy", "Arbeitnow", "Remote OK", "The Muse"];
 
 /** Offline fallback: course slug fragment -> role keywords. */
 export const COURSE_ROLE_HINTS: { match: string[]; roles: string[] }[] = [
@@ -40,6 +46,23 @@ export function fallbackRoles(course: string): string[] {
   return hit ? hit.roles : ["graduate trainee", "analyst", "operations associate", "customer support"];
 }
 
+export function daysAgo(iso?: string): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86_400_000);
+}
+
+export function postedLabel(iso?: string): string {
+  const d = daysAgo(iso);
+  if (d === null) return "Recently";
+  if (d <= 0) return "Today";
+  if (d === 1) return "Yesterday";
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.floor(d / 7)}w ago`;
+  return `${Math.floor(d / 30)}mo ago`;
+}
+
 /** Deep links into Nigerian + global platforms we can't call by API. */
 export function platformLinks(query: string, location: string) {
   const q = encodeURIComponent(query);
@@ -47,6 +70,7 @@ export function platformLinks(query: string, location: string) {
   return [
     { name: "Jobberman", url: `https://www.jobberman.com/jobs?q=${q}` },
     { name: "MyJobMag", url: `https://www.myjobmag.com/search/jobs?q=${q}` },
+    { name: "Hot Nigerian Jobs", url: `https://www.hotnigerianjobs.com/search.php?q=${q}` },
     { name: "LinkedIn", url: `https://www.linkedin.com/jobs/search/?keywords=${q}&location=${loc}` },
     { name: "Indeed", url: `https://ng.indeed.com/jobs?q=${q}&l=${loc}` },
     { name: "Google Jobs", url: `https://www.google.com/search?q=${q}+jobs+${loc}&ibp=htl;jobs` },
