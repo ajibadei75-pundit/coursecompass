@@ -146,7 +146,8 @@ function Hero() {
             )}
           </div>
 
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl">
+            <CtaCard to="/jobs" icon={<Briefcase className="size-4" />} title="Job Match" desc="Live jobs for your course & skills" />
             <CtaCard to="/match" icon={<Brain className="size-4" />} title="Course Match Test" desc="20 questions → best-fit courses" />
             <CtaCard to="/chat" icon={<MessageSquare className="size-4" />} title="AI Career Chat" desc="Ask anything about your future" />
             <CtaCard to="/courses" icon={<Compass className="size-4" />} title="Browse Courses" desc="Every Nigerian degree, decoded" />
@@ -157,7 +158,7 @@ function Hero() {
   );
 }
 
-function CtaCard({ to, icon, title, desc }: { to: "/match" | "/chat" | "/courses"; icon: React.ReactNode; title: string; desc: string }) {
+function CtaCard({ to, icon, title, desc }: { to: "/match" | "/chat" | "/courses" | "/jobs"; icon: React.ReactNode; title: string; desc: string }) {
   return (
     <Link
       to={to}
