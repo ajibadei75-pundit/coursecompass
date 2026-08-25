@@ -1,4 +1,4 @@
-import type { JobHit } from "./jobs-utils";
+import type { JobHit, JobSource } from "./jobs-utils";
 
 const UA = { "user-agent": "CourseCompass/1.0 (+https://coursecompassng.lovable.app)" };
 
@@ -24,9 +24,20 @@ async function safeJson(url: string, timeoutMs = 12000): Promise<any | null> {
   }
 }
 
+/** Simple TTL memo so repeated searches stay fast and stay inside provider limits. */
+const memo = new Map<string, { at: number; jobs: JobHit[] }>();
+async function cached(key: string, ttlMs: number, fn: () => Promise<JobHit[]>): Promise<JobHit[]> {
+  const hit = memo.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.jobs;
+  const jobs = await fn();
+  memo.set(key, { at: Date.now(), jobs });
+  if (memo.size > 120) memo.delete(memo.keys().next().value as string);
+  return jobs;
+}
+
 async function fromRemotive(term: string): Promise<JobHit[]> {
   const data = await safeJson(
-    `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(term)}&limit=20`,
+    `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(term)}&limit=25`,
   );
   const jobs: any[] = data?.jobs ?? [];
   return jobs.map((j) => ({
@@ -42,13 +53,13 @@ async function fromRemotive(term: string): Promise<JobHit[]> {
     tags: Array.isArray(j.tags) ? j.tags.slice(0, 6) : [],
     excerpt: strip(j.description ?? ""),
     score: 0,
-    matched: [],
+    matched: [] as string[],
   }));
 }
 
 async function fromJobicy(term: string): Promise<JobHit[]> {
   const data = await safeJson(
-    `https://jobicy.com/api/v2/remote-jobs?count=20&tag=${encodeURIComponent(term)}`,
+    `https://jobicy.com/api/v2/remote-jobs?count=25&tag=${encodeURIComponent(term)}`,
   );
   const jobs: any[] = data?.jobs ?? [];
   return jobs.map((j) => ({
@@ -67,46 +78,108 @@ async function fromJobicy(term: string): Promise<JobHit[]> {
     tags: Array.isArray(j.jobIndustry) ? j.jobIndustry.slice(0, 4) : [],
     excerpt: strip(j.jobExcerpt ?? j.jobDescription ?? ""),
     score: 0,
-    matched: [],
-  }));
-}
-
-let arbeitnowCache: { at: number; jobs: JobHit[] } | null = null;
-async function fromArbeitnow(): Promise<JobHit[]> {
-  if (arbeitnowCache && Date.now() - arbeitnowCache.at < 10 * 60_000) return arbeitnowCache.jobs;
-  const data = await safeJson("https://www.arbeitnow.com/api/job-board-api");
-  const jobs: any[] = data?.data ?? [];
-  const mapped = jobs.slice(0, 120).map((j) => ({
-    id: `arbeitnow-${j.slug}`,
-    title: j.title ?? "Role",
-    company: j.company_name ?? "Company",
-    location: j.location || (j.remote ? "Remote" : "On-site"),
-    remote: Boolean(j.remote),
-    source: "Arbeitnow" as const,
-    url: j.url,
-    postedAt: j.created_at ? new Date(j.created_at * 1000).toISOString() : undefined,
-    tags: Array.isArray(j.tags) ? j.tags.slice(0, 6) : [],
-    excerpt: strip(j.description ?? ""),
-    score: 0,
     matched: [] as string[],
   }));
-  arbeitnowCache = { at: Date.now(), jobs: mapped };
-  return mapped;
 }
 
-export async function aggregateJobs(roles: string[], skills: string[]): Promise<JobHit[]> {
+async function fromArbeitnow(): Promise<JobHit[]> {
+  return cached("arbeitnow", 10 * 60_000, async () => {
+    const data = await safeJson("https://www.arbeitnow.com/api/job-board-api");
+    const jobs: any[] = data?.data ?? [];
+    return jobs.slice(0, 150).map((j) => ({
+      id: `arbeitnow-${j.slug}`,
+      title: j.title ?? "Role",
+      company: j.company_name ?? "Company",
+      location: j.location || (j.remote ? "Remote" : "On-site"),
+      remote: Boolean(j.remote),
+      source: "Arbeitnow" as const,
+      url: j.url,
+      postedAt: j.created_at ? new Date(j.created_at * 1000).toISOString() : undefined,
+      tags: Array.isArray(j.tags) ? j.tags.slice(0, 6) : [],
+      excerpt: strip(j.description ?? ""),
+      score: 0,
+      matched: [] as string[],
+    }));
+  });
+}
+
+/** Remote OK — attribution required by their API terms (we credit the source on each card). */
+async function fromRemoteOk(): Promise<JobHit[]> {
+  return cached("remoteok", 10 * 60_000, async () => {
+    const data = await safeJson("https://remoteok.com/api");
+    const jobs: any[] = Array.isArray(data) ? data.slice(1) : [];
+    return jobs.map((j) => ({
+      id: `remoteok-${j.id}`,
+      title: j.position ?? j.title ?? "Role",
+      company: j.company ?? "Company",
+      location: j.location || "Remote",
+      remote: true,
+      source: "Remote OK" as const,
+      url: j.url ?? `https://remoteok.com/remote-jobs/${j.slug}`,
+      postedAt: j.date,
+      salary:
+        j.salary_min && j.salary_max
+          ? `USD ${Math.round(j.salary_min / 1000)}k–${Math.round(j.salary_max / 1000)}k/yr`
+          : undefined,
+      tags: Array.isArray(j.tags) ? j.tags.slice(0, 6) : [],
+      excerpt: strip(j.description ?? ""),
+      score: 0,
+      matched: [] as string[],
+    }));
+  });
+}
+
+/** The Muse — on-site + hybrid roles worldwide, keyword-searchable. */
+async function fromTheMuse(term: string, location: string): Promise<JobHit[]> {
+  const locPart = location ? `&location=${encodeURIComponent(location)}` : "";
+  const data = await safeJson(
+    `https://www.themuse.com/api/public/jobs?page=0&descending=true&q=${encodeURIComponent(term)}${locPart}`,
+  );
+  const jobs: any[] = data?.results ?? [];
+  return jobs.map((j) => {
+    const locs = (j.locations ?? []).map((l: any) => l.name).filter(Boolean);
+    return {
+      id: `muse-${j.id}`,
+      title: j.name ?? "Role",
+      company: j.company?.name ?? "Company",
+      location: locs.join(", ") || "Multiple locations",
+      remote: locs.some((l: string) => /flexible|remote/i.test(l)),
+      source: "The Muse" as const,
+      url: j.refs?.landing_page ?? "https://www.themuse.com/jobs",
+      postedAt: j.publication_date,
+      tags: [
+        ...(j.categories ?? []).map((c: any) => c.name),
+        ...(j.levels ?? []).map((l: any) => l.name),
+      ].slice(0, 5),
+      excerpt: strip(j.contents ?? ""),
+      score: 0,
+      matched: [] as string[],
+    };
+  });
+}
+
+export async function aggregateJobs(
+  roles: string[],
+  _skills: string[],
+  location = "",
+): Promise<JobHit[]> {
   const terms = roles.slice(0, 3);
   const batches = await Promise.all([
-    ...terms.map((t) => fromRemotive(t)),
-    ...terms.slice(0, 2).map((t) => fromJobicy(t.split(" ")[0])),
+    ...terms.map((t) => cached(`remotive:${t}`, 5 * 60_000, () => fromRemotive(t))),
+    ...terms.slice(0, 2).map((t) => cached(`jobicy:${t}`, 5 * 60_000, () => fromJobicy(t.split(" ")[0]))),
+    ...terms.slice(0, 2).map((t) =>
+      cached(`muse:${t}:${location}`, 5 * 60_000, () => fromTheMuse(t, location)),
+    ),
     fromArbeitnow(),
+    fromRemoteOk(),
   ]);
 
   const seen = new Set<string>();
   const all: JobHit[] = [];
   for (const b of batches) {
     for (const j of b) {
-      const key = `${j.title}::${j.company}`.toLowerCase();
+      if (!j.url) continue;
+      const key = `${j.title}::${j.company}`.toLowerCase().replace(/\s+/g, " ");
       if (seen.has(key)) continue;
       seen.add(key);
       all.push(j);
@@ -114,6 +187,11 @@ export async function aggregateJobs(roles: string[], skills: string[]): Promise<
   }
   return all;
 }
+
+const NG_CITIES = [
+  "lagos", "abuja", "ibadan", "port harcourt", "kano", "benin", "enugu", "abeokuta",
+  "ilorin", "kaduna", "jos", "uyo", "calabar", "owerri", "warri", "akure", "nigeria",
+];
 
 export function scoreJobs(
   jobs: JobHit[],
@@ -125,43 +203,71 @@ export function scoreJobs(
   const roleWords = roles.flatMap((r) => r.toLowerCase().split(/\s+/)).filter((w) => w.length > 3);
   const skillList = skills.map((s) => s.toLowerCase().trim()).filter(Boolean);
   const loc = location.toLowerCase().trim();
+  const locTokens = loc.split(/[,\s]+/).filter((t) => t.length > 2);
+  const wantsNigeria = NG_CITIES.some((c) => loc.includes(c));
 
   const scored = jobs.map((j) => {
+    const title = j.title.toLowerCase();
     const hay = `${j.title} ${j.tags.join(" ")} ${j.excerpt}`.toLowerCase();
     const matched: string[] = [];
     let score = 0;
 
-    for (const r of roles) {
-      if (j.title.toLowerCase().includes(r.toLowerCase())) {
-        score += 45;
+    // Exact / partial role title matching, weighted by role rank.
+    roles.forEach((r, i) => {
+      const rl = r.toLowerCase();
+      if (title === rl) {
+        score += 50 - i * 3;
         matched.push(r);
-        break;
+      } else if (title.includes(rl)) {
+        score += 40 - i * 3;
+        matched.push(r);
       }
+    });
+    for (const w of new Set(roleWords)) {
+      if (title.includes(w)) score += 8;
+      else if (hay.includes(w)) score += 4;
     }
-    for (const w of new Set(roleWords)) if (hay.includes(w)) score += 6;
+
     for (const s of skillList) {
-      if (hay.includes(s)) {
-        score += 14;
+      if (title.includes(s)) {
+        score += 18;
+        matched.push(s);
+      } else if (hay.includes(s)) {
+        score += 12;
         matched.push(s);
       }
     }
-    if (j.remote) score += 8;
-    if (loc && `${j.location}`.toLowerCase().includes(loc)) {
-      score += 20;
+
+    // Location fit.
+    const jl = `${j.location}`.toLowerCase();
+    if (locTokens.some((t) => jl.includes(t))) {
+      score += 22;
       matched.push(location);
     }
-    if (loc && /nigeria|africa|worldwide|anywhere/i.test(j.location)) score += 10;
+    if (wantsNigeria && /nigeria|africa|emea|worldwide|anywhere|global/i.test(jl)) score += 14;
+    if (j.remote) score += 10;
+
+    // Freshness.
     if (j.postedAt) {
       const days = (Date.now() - new Date(j.postedAt).getTime()) / 86_400_000;
-      if (days < 7) score += 10;
+      if (days < 3) score += 14;
+      else if (days < 7) score += 9;
       else if (days < 30) score += 4;
+      else if (days > 90) score -= 8;
     }
-    return { ...j, score: Math.max(0, Math.min(100, Math.round(score))), matched: [...new Set(matched)].slice(0, 5) };
+
+    // Signal quality.
+    if (j.salary) score += 5;
+    if (/senior|lead|principal|manager|director|head of|vp /.test(title)) score -= 6;
+    if (/intern|graduate|junior|entry|trainee/.test(title)) score += 6;
+
+    const normalised = Math.max(0, Math.min(100, Math.round(score)));
+    return { ...j, score: normalised, matched: [...new Set(matched)].slice(0, 6) };
   });
 
   return scored
     .filter((j) => (remoteOnly ? j.remote : true))
-    .filter((j) => j.score > 8)
+    .filter((j) => j.score > 10)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 30);
+    .slice(0, 60);
 }
