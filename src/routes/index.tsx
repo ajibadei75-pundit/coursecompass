@@ -82,7 +82,7 @@ function Hero() {
           </span>
           <h1 className="mt-5 font-display text-4xl sm:text-6xl font-bold leading-[1.05]">
             Helping students understand their future{" "}
-            <span className="text-primary">before it's too late.</span>
+            <span className="text-gradient-brand">before it's too late.</span>
           </h1>
           <p className="mt-5 text-lg text-muted-foreground max-w-2xl">
             You didn't get Medicine — you got Physiology. Or MLS. Or Statistics. Or Yoruba.
