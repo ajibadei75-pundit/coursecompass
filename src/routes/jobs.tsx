@@ -271,7 +271,7 @@ function JobsPage() {
                   </div>
                 )}
 
-                <span className="mt-4 inline-flex items-center gap-1 text-xs text-primary">
+                <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs text-primary">
                   View & apply <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
                 </span>
               </a>
