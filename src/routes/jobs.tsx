@@ -1,27 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Briefcase, MapPin, Loader2, Sparkles, Search, X, Plus, Globe2,
-  Building2, ArrowUpRight, Wifi, LocateFixed,
+  Building2, ArrowUpRight, Wifi, LocateFixed, Bell, BellRing, SlidersHorizontal,
+  RefreshCw, Clock, Flame,
 } from "lucide-react";
 import { searchJobsForCourse } from "@/lib/jobs.functions";
-import { platformLinks, type JobSearchResult } from "@/lib/jobs-utils";
+import {
+  platformLinks, postedLabel, daysAgo, ALL_SOURCES,
+  type JobSearchResult, type JobSource, type JobHit,
+} from "@/lib/jobs-utils";
+import {
+  loadAlert, saveAlert, clearAlert, loadLastSearch, saveLastSearch,
+  requestNotifyPermission, notifyNewJobs,
+} from "@/lib/job-alerts";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
-      { title: "Job Match — Find Jobs For Your Course | CourseCompass" },
+      { title: "Job Match & Alerts — Jobs For Your Course | CourseCompass" },
       {
         name: "description",
         content:
-          "Search live jobs across multiple platforms matched to your Nigerian university course, your extra skills and your location — remote and on-site.",
+          "Search live jobs across five job platforms matched to your Nigerian university course, skills and location — then switch on alerts to get notified the moment new matches appear.",
       },
-      { property: "og:title", content: "Job Match — Jobs For Your Course" },
+      { property: "og:title", content: "Job Match & Alerts — Jobs For Your Course" },
       {
         property: "og:description",
-        content: "Live job matches from several job boards, ranked by your course, skills and location.",
+        content: "Live matches from five job boards, ranked by course, skills and location, with real-time job alerts.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -35,6 +43,9 @@ const SKILL_SUGGESTIONS = [
   "Customer Support", "Digital Marketing", "Project Management", "Figma",
 ];
 
+type SortKey = "match" | "recent";
+const POLL_MS = 5 * 60_000;
+
 function JobsPage() {
   const [course, setCourse] = useState("");
   const [location, setLocation] = useState("");
@@ -43,11 +54,107 @@ function JobsPage() {
   const [skillDraft, setSkillDraft] = useState("");
   const [locating, setLocating] = useState(false);
 
+  // Filters
+  const [sort, setSort] = useState<SortKey>("match");
+  const [minScore, setMinScore] = useState(0);
+  const [maxAge, setMaxAge] = useState(0); // 0 = any
+  const [activeSources, setActiveSources] = useState<JobSource[]>(ALL_SOURCES);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Alerts
+  const [alertOn, setAlertOn] = useState(false);
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
+  const [newIds, setNewIds] = useState<string[]>([]);
+  const seenRef = useRef<Set<string>>(new Set());
+  const [lastCheck, setLastCheck] = useState<string | null>(null);
+
   const run = useServerFn(searchJobsForCourse);
   const mutation = useMutation({
     mutationFn: (): Promise<JobSearchResult> =>
-      run({ data: { course, skills, location, remoteOnly } }) as Promise<JobSearchResult>,
+      run({ data: { course, skills, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
+    onSuccess: (d) => {
+      seenRef.current = new Set(d.jobs.map((j) => j.id));
+      setNewIds([]);
+      setLastCheck(d.fetchedAt);
+      saveLastSearch({ course, skills, location, remoteOnly });
+    },
   });
+
+  // Restore last search + alert config
+  useEffect(() => {
+    const last = loadLastSearch();
+    if (last) {
+      if (last.course) setCourse((c) => c || last.course!);
+      if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills!));
+      if (last.location) setLocation((l) => l || last.location!);
+      if (last.remoteOnly) setRemoteOnly(true);
+    }
+    const a = loadAlert();
+    if (a?.enabled) {
+      setAlertOn(true);
+      seenRef.current = new Set(a.seen ?? []);
+      setLastCheck(a.lastRun ?? null);
+    }
+  }, []);
+
+  const jobs = mutation.data?.jobs ?? [];
+
+  const checkForNew = useCallback(async () => {
+    if (!course.trim()) return;
+    try {
+      const res = (await run({
+        data: { course, skills, location, remoteOnly, quiet: true },
+      })) as JobSearchResult;
+      const fresh = res.jobs.filter((j) => !seenRef.current.has(j.id) && j.score >= Math.max(minScore, 25));
+      if (fresh.length) {
+        notifyNewJobs(fresh);
+        setNewIds((p) => [...new Set([...p, ...fresh.map((j) => j.id)])]);
+        mutation.reset();
+        // merge new results into view
+        mutation.mutate();
+      }
+      res.jobs.forEach((j) => seenRef.current.add(j.id));
+      setLastCheck(res.fetchedAt);
+      saveAlert({
+        course, skills, location, remoteOnly, minScore,
+        enabled: true, seen: [...seenRef.current], lastRun: res.fetchedAt,
+      });
+    } catch {
+      /* silent — alerts are best-effort */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course, skills, location, remoteOnly, minScore, run]);
+
+  // Polling while alerts are on
+  useEffect(() => {
+    if (!alertOn) return;
+    const id = setInterval(checkForNew, POLL_MS);
+    return () => clearInterval(id);
+  }, [alertOn, checkForNew]);
+
+  const toggleAlerts = async () => {
+    if (alertOn) {
+      setAlertOn(false);
+      clearAlert();
+      setAlertMsg("Job alerts turned off.");
+      return;
+    }
+    if (!course.trim()) {
+      setAlertMsg("Enter your course first, then switch alerts on.");
+      return;
+    }
+    const perm = await requestNotifyPermission();
+    setAlertOn(true);
+    saveAlert({
+      course, skills, location, remoteOnly, minScore,
+      enabled: true, seen: [...seenRef.current], lastRun: new Date().toISOString(),
+    });
+    setAlertMsg(
+      perm === "granted"
+        ? "Alerts on — we'll check every 5 minutes and pop a notification for new matches."
+        : "Alerts on — notifications are blocked in your browser, so new matches will be flagged here with a NEW badge instead.",
+    );
+  };
 
   const addSkill = (raw: string) => {
     const s = raw.trim();
@@ -78,6 +185,17 @@ function JobsPage() {
     );
   };
 
+  const visible = useMemo(() => {
+    let list = jobs.filter((j) => activeSources.includes(j.source) && j.score >= minScore);
+    if (maxAge > 0) list = list.filter((j) => (daysAgo(j.postedAt) ?? 999) <= maxAge);
+    if (sort === "recent") {
+      list = [...list].sort(
+        (a, b) => new Date(b.postedAt ?? 0).getTime() - new Date(a.postedAt ?? 0).getTime(),
+      );
+    }
+    return list;
+  }, [jobs, activeSources, minScore, maxAge, sort]);
+
   const links = useMemo(
     () => platformLinks(mutation.data?.roles?.[0] || course || "graduate", location),
     [mutation.data, course, location],
@@ -89,15 +207,15 @@ function JobsPage() {
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
       <header className="max-w-2xl">
         <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
-          <Briefcase className="size-3.5" /> Live job matching
+          <Briefcase className="size-3.5" /> Live matching across 5 job platforms
         </span>
         <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight">
           Jobs that actually fit{" "}
           <span className="text-gradient-brand">your course and skills</span>
         </h1>
         <p className="mt-4 text-muted-foreground">
-          We pull live roles from several job platforms, then rank them against your degree, the extra
-          skills you've picked up, and where you want to work.
+          We pull live roles from Remotive, Jobicy, Arbeitnow, Remote OK and The Muse, rank them against
+          your degree, skills and location — then keep watching and alert you when new ones land.
         </p>
       </header>
 
@@ -109,6 +227,7 @@ function JobsPage() {
             <input
               value={course}
               onChange={(e) => setCourse(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && canSearch && mutation.mutate()}
               placeholder="e.g. Statistics, Mass Communication…"
               className="input-field pl-10"
             />
@@ -196,7 +315,30 @@ function JobsPage() {
             {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             {mutation.isPending ? "Matching jobs…" : "Find my jobs"}
           </button>
+
+          <button
+            onClick={toggleAlerts}
+            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-3 text-sm transition ${
+              alertOn
+                ? "border-gold/50 bg-gold/15 text-gold"
+                : "border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/50"
+            }`}
+          >
+            {alertOn ? <BellRing className="size-4 animate-pulse" /> : <Bell className="size-4" />}
+            {alertOn ? "Alerts on" : "Notify me of new jobs"}
+          </button>
+
+          {alertOn && (
+            <button
+              onClick={checkForNew}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition"
+            >
+              <RefreshCw className="size-3.5" /> Check now
+              {lastCheck && <span className="opacity-70">· last {new Date(lastCheck).toLocaleTimeString()}</span>}
+            </button>
+          )}
         </div>
+        {alertMsg && <p className="mt-3 text-xs text-muted-foreground">{alertMsg}</p>}
       </section>
 
       {/* Results */}
@@ -213,7 +355,12 @@ function JobsPage() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="font-display text-2xl font-semibold">
-                {mutation.data.jobs.length} matched role{mutation.data.jobs.length === 1 ? "" : "s"}
+                {visible.length} matched role{visible.length === 1 ? "" : "s"}
+                {newIds.length > 0 && (
+                  <span className="ml-2 align-middle rounded-full bg-gold/20 border border-gold/40 px-2 py-0.5 text-[11px] text-gold">
+                    {newIds.length} new
+                  </span>
+                )}
               </h2>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {mutation.data.roles.map((r) => (
@@ -223,60 +370,91 @@ function JobsPage() {
                 ))}
               </div>
             </div>
+
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg border border-border/60 overflow-hidden text-xs">
+                {(["match", "recent"] as SortKey[]).map((k) => (
+                  <button
+                    key={k}
+                    onClick={() => setSort(k)}
+                    className={`px-3 py-2 transition ${sort === k ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {k === "match" ? <Flame className="inline size-3.5 mr-1" /> : <Clock className="inline size-3.5 mr-1" />}
+                    {k === "match" ? "Best match" : "Newest"}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition"
+              >
+                <SlidersHorizontal className="size-3.5" /> Filters
+              </button>
+            </div>
           </div>
+
+          {showFilters && (
+            <div className="mt-4 glass rounded-xl p-4 grid gap-4 sm:grid-cols-3 animate-fade-in">
+              <label className="text-xs">
+                <span className="text-muted-foreground">Minimum match: {minScore}%</span>
+                <input
+                  type="range" min={0} max={90} step={5} value={minScore}
+                  onChange={(e) => setMinScore(Number(e.target.value))}
+                  className="mt-2 w-full accent-[var(--primary)]"
+                />
+              </label>
+              <label className="text-xs">
+                <span className="text-muted-foreground">Posted within</span>
+                <select
+                  value={maxAge}
+                  onChange={(e) => setMaxAge(Number(e.target.value))}
+                  className="mt-2 w-full rounded-md bg-surface-2/60 border border-border/60 px-2 py-2 text-xs"
+                >
+                  <option value={0}>Any time</option>
+                  <option value={3}>Last 3 days</option>
+                  <option value={7}>Last week</option>
+                  <option value={30}>Last month</option>
+                </select>
+              </label>
+              <div className="text-xs">
+                <span className="text-muted-foreground">Sources</span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {ALL_SOURCES.map((s) => {
+                    const on = activeSources.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        onClick={() =>
+                          setActiveSources((p) => (on ? p.filter((x) => x !== s) : [...p, s]))
+                        }
+                        className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                          on ? "border-primary/50 bg-primary/15 text-primary" : "border-border/50 text-muted-foreground"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {mutation.data.notice && (
             <p className="mt-3 text-xs text-gold/90">{mutation.data.notice}</p>
           )}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {mutation.data.jobs.map((j, i) => (
-              <a
-                key={j.id}
-                href={j.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}
-                className="group glass rounded-xl p-4 hover:border-primary/60 transition-all hover:-translate-y-0.5 animate-fade-in opacity-0 [animation-fill-mode:forwards] flex flex-col"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-medium group-hover:text-primary transition">{j.title}</div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Building2 className="size-3.5" /> {j.company}
-                    </div>
-                  </div>
-                  <MatchRing score={j.score} />
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    {j.remote ? <Wifi className="size-3.5 text-primary" /> : <MapPin className="size-3.5" />}
-                    {j.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Globe2 className="size-3.5" /> {j.source}
-                  </span>
-                  {j.salary && <span className="text-gold">{j.salary}</span>}
-                </div>
-
-                <p className="mt-3 text-xs text-muted-foreground line-clamp-3">{j.excerpt}</p>
-
-                {j.matched.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {j.matched.map((m) => (
-                      <span key={m} className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] text-gold">
-                        {m}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs text-primary">
-                  View & apply <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
-                </span>
-              </a>
+            {visible.map((j, i) => (
+              <JobCard key={j.id} job={j} index={i} isNew={newIds.includes(j.id)} />
             ))}
           </div>
+
+          {visible.length === 0 && (
+            <p className="mt-6 text-sm text-muted-foreground">
+              No roles pass your current filters — loosen the minimum match or date range.
+            </p>
+          )}
 
           <div className="mt-10 glass rounded-2xl p-5">
             <div className="text-sm font-medium">Keep searching on Nigerian & global platforms</div>
@@ -296,10 +474,76 @@ function JobsPage() {
                 </a>
               ))}
             </div>
+            <p className="mt-4 text-[11px] text-muted-foreground">
+              Listings sourced from Remotive, Jobicy, Arbeitnow,{" "}
+              <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">Remote OK</a>{" "}
+              and The Muse.
+            </p>
           </div>
         </section>
       )}
     </div>
+  );
+}
+
+function JobCard({ job: j, index, isNew }: { job: JobHit; index: number; isNew: boolean }) {
+  return (
+    <a
+      href={j.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ animationDelay: `${Math.min(index, 12) * 45}ms` }}
+      className={`group glass rounded-xl p-4 transition-all hover:-translate-y-0.5 animate-fade-in opacity-0 [animation-fill-mode:forwards] flex flex-col ${
+        isNew ? "border-gold/60 shadow-[0_0_0_1px_var(--gold)]" : "hover:border-primary/60"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-medium group-hover:text-primary transition">
+            {j.title}
+            {isNew && (
+              <span className="ml-2 rounded-full bg-gold/20 border border-gold/40 px-1.5 py-0.5 text-[10px] text-gold align-middle">
+                NEW
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            <Building2 className="size-3.5" /> {j.company}
+          </div>
+        </div>
+        <MatchRing score={j.score} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          {j.remote ? <Wifi className="size-3.5 text-primary" /> : <MapPin className="size-3.5" />}
+          {j.location}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Globe2 className="size-3.5" /> {j.source}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Clock className="size-3.5" /> {postedLabel(j.postedAt)}
+        </span>
+        {j.salary && <span className="text-gold">{j.salary}</span>}
+      </div>
+
+      <p className="mt-3 text-xs text-muted-foreground line-clamp-3">{j.excerpt}</p>
+
+      {j.matched.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {j.matched.map((m) => (
+            <span key={m} className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] text-gold">
+              {m}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs text-primary">
+        View & apply <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
+      </span>
+    </a>
   );
 }
 
