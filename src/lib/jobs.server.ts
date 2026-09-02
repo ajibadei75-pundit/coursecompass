@@ -1,6 +1,6 @@
 import type { JobHit, JobSource } from "./jobs-utils";
 
-const UA = { "user-agent": "CourseCompass/1.0 (+https://coursecompassng.lovable.app)" };
+const UA = { "user-agent": "CourseandJobCompass/1.0 (+https://courseandjobcompassng.lovable.app)" };
 
 function strip(html: string, max = 260) {
   const text = html
@@ -193,6 +193,8 @@ const NG_CITIES = [
   "ilorin", "kaduna", "jos", "uyo", "calabar", "owerri", "warri", "akure", "nigeria",
 ];
 
+const NIGERIA_RELEVANT = /nigeria|remote|africa|emea|worldwide|anywhere|global|work from home/i;
+
 export function scoreJobs(
   jobs: JobHit[],
   roles: string[],
@@ -204,7 +206,7 @@ export function scoreJobs(
   const skillList = skills.map((s) => s.toLowerCase().trim()).filter(Boolean);
   const loc = location.toLowerCase().trim();
   const locTokens = loc.split(/[,\s]+/).filter((t) => t.length > 2);
-  const wantsNigeria = NG_CITIES.some((c) => loc.includes(c));
+  const wantsNigeria = !loc || NG_CITIES.some((c) => loc.includes(c)) || loc.includes("nigeria");
 
   const scored = jobs.map((j) => {
     const title = j.title.toLowerCase();
@@ -238,13 +240,15 @@ export function scoreJobs(
       }
     }
 
-    // Location fit.
+    // Location fit: Nigeria is the default market, while clearly localised
+    // non-Nigerian roles are not allowed to outrank relevant opportunities.
     const jl = `${j.location}`.toLowerCase();
+    if (wantsNigeria && !NIGERIA_RELEVANT.test(jl)) score -= 18;
     if (locTokens.some((t) => jl.includes(t))) {
       score += 22;
       matched.push(location);
     }
-    if (wantsNigeria && /nigeria|africa|emea|worldwide|anywhere|global/i.test(jl)) score += 14;
+    if (wantsNigeria && /nigeria|africa|emea|worldwide|anywhere|global/i.test(jl)) score += 20;
     if (j.remote) score += 10;
 
     // Freshness.
@@ -267,7 +271,7 @@ export function scoreJobs(
 
   return scored
     .filter((j) => (remoteOnly ? j.remote : true))
-    .filter((j) => j.score > 10)
+    .filter((j) => j.score > 18)
     .sort((a, b) => b.score - a.score)
     .slice(0, 60);
 }

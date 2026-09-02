@@ -8,8 +8,9 @@ import {
   VALIDATOR_SYSTEM_PROMPT,
   buildValidatorPrompt,
 } from "@/lib/response-validator.server";
+import { researchNigerianWeb } from "@/lib/web-research.server";
 
-const DRAFTER_SYSTEM_PROMPT = `You are the CourseCompass AI Career Assistant, drafting an answer for a Nigerian student.
+const DRAFTER_SYSTEM_PROMPT = `You are the CourseandJobCompass AI Career Assistant, drafting an answer for a Nigerian student.
 
 Audience: Nigerian secondary-school students, JAMB candidates, undergraduates placed in a course they did not want, and fresh graduates.
 
@@ -82,13 +83,23 @@ export const Route = createFileRoute("/api/chat")({
         }
         const modelMessages = await convertToModelMessages(messages);
 
+        const webSources = await researchNigerianWeb(userQuestion);
+        const researchContext = webSources.length
+          ? `\n\nCURRENT WEB RESEARCH (use only as supporting evidence; do not invent beyond it):\n${webSources
+              .map((source, index) => `[${index + 1}] ${source.title} — ${source.url}\n${source.description}`)
+              .join("\n\n")}`
+          : "\n\nCURRENT WEB RESEARCH: No live sources were available. Mark time-sensitive claims as [Unverified].";
+
         // Pass 1 — draft (non-streaming so the validator can rewrite it whole)
         let draft = "";
         try {
           const drafted = await generateText({
             model: drafterModel,
             system: DRAFTER_SYSTEM_PROMPT,
-            messages: modelMessages,
+            messages: [
+              ...modelMessages,
+              { role: "user", content: researchContext },
+            ],
           });
           draft = drafted.text;
         } catch (err) {
@@ -100,7 +111,12 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model: validatorModel,
           system: VALIDATOR_SYSTEM_PROMPT,
-          prompt: buildValidatorPrompt(userQuestion, draft),
+           prompt: buildValidatorPrompt(
+             userQuestion,
+             `${draft}\n\nResearch sources to cite when used:\n${webSources
+               .map((source, index) => `[${index + 1}] ${source.title} — ${source.url}`)
+               .join("\n") || "No live sources available."}`,
+           ),
         });
 
         return result.toUIMessageStreamResponse({

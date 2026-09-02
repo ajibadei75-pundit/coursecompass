@@ -78,25 +78,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CourseCompass — Understand Your Course, Build Your Future" },
+      { title: "CourseandJobCompass — Courses, Careers & Jobs in Nigeria" },
       {
         name: "description",
         content:
-          "AI-powered Nigerian university course intelligence, career guidance, and skills roadmaps for students who want clarity.",
+          "CourseandJobCompass helps Nigerian students understand courses, build useful skills and find relevant jobs in one place.",
       },
-      { name: "author", content: "CourseCompass" },
-      { property: "og:title", content: "CourseCompass — Understand Your Course, Build Your Future" },
+      { name: "author", content: "CourseandJobCompass" },
+      { property: "og:title", content: "CourseandJobCompass — Courses, Careers & Jobs in Nigeria" },
       {
         property: "og:description",
         content:
-          "Understand any Nigerian university course, discover careers, salaries, skills and AI impact — powered by AI.",
+          "Understand Nigerian university courses, discover careers and skills, and find jobs matched to your profession.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "CourseCompass — Understand Your Course, Build Your Future" },
-      { name: "description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
-      { property: "og:description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
-      { name: "twitter:description", content: "Course Compass Nigeria is an AI-powered ecosystem for university course intelligence and career navigation." },
+      { name: "twitter:title", content: "CourseandJobCompass — Courses, Careers & Jobs in Nigeria" },
+      { name: "twitter:description", content: "A practical Nigerian guide to choosing courses, building skills and finding relevant work." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
     ],
@@ -118,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
