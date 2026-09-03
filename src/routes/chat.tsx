@@ -9,10 +9,12 @@ import remarkGfm from "remark-gfm";
 export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
-      { title: "AI Career Assistant — CourseCompass" },
-      { name: "description", content: "Ask anything about Nigerian university courses, careers, salaries and skills. Get empathetic, AI-powered guidance." },
-      { property: "og:title", content: "AI Career Assistant — CourseCompass" },
-      { property: "og:description", content: "Empathetic AI guidance for Nigerian students about courses and careers." },
+       { title: "Research Assistant — CourseandJobCompass" },
+       { name: "description", content: "Ask about Nigerian courses, professions and careers with current web research and structured guidance." },
+       { property: "og:title", content: "Research Assistant — CourseandJobCompass" },
+       { property: "og:description", content: "Grounded guidance for Nigerian students about courses, professions and careers." },
+       { property: "og:type", content: "website" },
+       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ChatPage,
@@ -49,14 +51,14 @@ function ChatPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 flex flex-col min-h-[calc(100vh-4rem)]">
       <header className="mb-4">
-        <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-wider">
-          <Sparkles className="size-3.5" /> AI Career Assistant
+           <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-wider">
+           <Sparkles className="size-3.5" /> CourseandJobCompass research assistant
         </div>
         <h1 className="font-display text-3xl font-semibold mt-1">
-          Ask anything about your course or career
+           Ask about your course, profession or career
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Drafted by Claude, validated by GPT-5 for tone, structure & citations.
+           Answers are checked against available live web sources and clearly marked when a fact is uncertain.
         </p>
       </header>
 

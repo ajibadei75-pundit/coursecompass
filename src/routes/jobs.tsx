@@ -20,13 +20,13 @@ import {
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
-      { title: "Job Match & Alerts — Jobs For Your Course | CourseCompass" },
+       { title: "Nigeria Job Match & Alerts | CourseandJobCompass" },
       {
         name: "description",
-        content:
-          "Search live jobs across five job platforms matched to your Nigerian university course, skills and location — then switch on alerts to get notified the moment new matches appear.",
+         content:
+           "Find Nigeria-first jobs matched to your profession, university course, skills and location, with alerts for new opportunities.",
       },
-      { property: "og:title", content: "Job Match & Alerts — Jobs For Your Course" },
+       { property: "og:title", content: "Nigeria Job Match & Alerts — CourseandJobCompass" },
       {
         property: "og:description",
         content: "Live matches from five job boards, ranked by course, skills and location, with real-time job alerts.",
@@ -48,6 +48,7 @@ const POLL_MS = 5 * 60_000;
 
 function JobsPage() {
   const [course, setCourse] = useState("");
+  const [profession, setProfession] = useState("");
   const [location, setLocation] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -71,12 +72,12 @@ function JobsPage() {
   const run = useServerFn(searchJobsForCourse);
   const mutation = useMutation({
     mutationFn: (): Promise<JobSearchResult> =>
-      run({ data: { course, skills, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
+      run({ data: { course, profession, skills, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
     onSuccess: (d) => {
       seenRef.current = new Set(d.jobs.map((j) => j.id));
       setNewIds([]);
       setLastCheck(d.fetchedAt);
-      saveLastSearch({ course, skills, location, remoteOnly });
+    saveLastSearch({ course, skills, location, remoteOnly });
     },
   });
 
@@ -103,7 +104,7 @@ function JobsPage() {
     if (!course.trim()) return;
     try {
       const res = (await run({
-        data: { course, skills, location, remoteOnly, quiet: true },
+        data: { course, profession, skills, location, remoteOnly, quiet: true },
       })) as JobSearchResult;
       const fresh = res.jobs.filter((j) => !seenRef.current.has(j.id) && j.score >= Math.max(minScore, 25));
       if (fresh.length) {
@@ -123,7 +124,7 @@ function JobsPage() {
       /* silent — alerts are best-effort */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course, skills, location, remoteOnly, minScore, run]);
+  }, [course, profession, skills, location, remoteOnly, minScore, run]);
 
   // Polling while alerts are on
   useEffect(() => {
@@ -197,7 +198,7 @@ function JobsPage() {
   }, [jobs, activeSources, minScore, maxAge, sort]);
 
   const links = useMemo(
-    () => platformLinks(mutation.data?.roles?.[0] || course || "graduate", location),
+    () => platformLinks(profession || mutation.data?.roles?.[0] || course || "graduate", location),
     [mutation.data, course, location],
   );
 
@@ -206,29 +207,39 @@ function JobsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
       <header className="max-w-2xl">
-        <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
-          <Briefcase className="size-3.5" /> Live matching across 5 job platforms
+         <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
+           <Briefcase className="size-3.5" /> Nigeria-first job intelligence
         </span>
         <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight">
-          Jobs that actually fit{" "}
-          <span className="text-gradient-brand">your course and skills</span>
+           Your next opportunity, matched to{" "}
+           <span className="text-gradient-brand">your profession</span>
         </h1>
         <p className="mt-4 text-muted-foreground">
-          We pull live roles from Remotive, Jobicy, Arbeitnow, Remote OK and The Muse, rank them against
-          your degree, skills and location — then keep watching and alert you when new ones land.
+           Start with the work you want to do. We prioritise roles in Nigeria, then use your course,
+           additional skills and location to rank relevant listings from live job sources.
         </p>
       </header>
 
       {/* Search panel */}
       <section className="mt-8 glass rounded-2xl p-5 sm:p-6 animate-fade-in">
-        <div className="grid gap-4 md:grid-cols-2">
+         <div className="grid gap-4 md:grid-cols-3">
+          <Field label="Target profession">
+            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && canSearch && mutation.mutate()}
+              placeholder="e.g. Data analyst, nurse, designer"
+              className="input-field pl-10"
+            />
+          </Field>
           <Field label="Your course">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={course}
               onChange={(e) => setCourse(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && canSearch && mutation.mutate()}
-              placeholder="e.g. Statistics, Mass Communication…"
+               placeholder="e.g. Statistics, Mass Communication"
               className="input-field pl-10"
             />
           </Field>
@@ -238,10 +249,10 @@ function JobsPage() {
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Lagos, Nigeria"
+               placeholder="Nigeria, Lagos"
               className="input-field pl-10 pr-32"
             />
-            <button
+           <button
               type="button"
               onClick={useMyLocation}
               className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/20 transition"
@@ -313,7 +324,7 @@ function JobsPage() {
             className="relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-gradient-brand px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 transition hover:shadow-[0_10px_40px_-12px_var(--glow)]"
           >
             {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            {mutation.isPending ? "Matching jobs…" : "Find my jobs"}
+             {mutation.isPending ? "Matching Nigeria jobs…" : "Find my jobs"}
           </button>
 
           <button
@@ -457,9 +468,9 @@ function JobsPage() {
           )}
 
           <div className="mt-10 glass rounded-2xl p-5">
-            <div className="text-sm font-medium">Keep searching on Nigerian & global platforms</div>
+             <div className="text-sm font-medium">More places to find Nigerian opportunities</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Pre-filled searches using your best-fit role and location.
+               Pre-filled searches using your profession and location.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {links.map((l) => (
@@ -475,7 +486,7 @@ function JobsPage() {
               ))}
             </div>
             <p className="mt-4 text-[11px] text-muted-foreground">
-              Listings sourced from Remotive, Jobicy, Arbeitnow,{" "}
+               Live listings are sourced from Remotive, Jobicy, Arbeitnow,{" "}
               <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">Remote OK</a>{" "}
               and The Muse.
             </p>
