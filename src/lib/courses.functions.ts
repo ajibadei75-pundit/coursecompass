@@ -107,7 +107,7 @@ export const getCourseProfile = createServerFn({ method: "POST" })
       "Demand index numbers are 0-100 integers.";
 
     const draftPrompt =
-      `Build the complete CourseCompass profile for the course: "${courseName}". ` +
+      `Build the complete CourseandJobCompass profile for the course: "${courseName}". ` +
       `Treat this as a Nigerian undergraduate degree. Give 4-6 misconceptions vs realities, ` +
       `5-8 items in each list, and a 4-year + final-year roadmap students can actually follow. ` +
       `Keep tagline under 12 words. Return JSON matching the schema exactly.`;
