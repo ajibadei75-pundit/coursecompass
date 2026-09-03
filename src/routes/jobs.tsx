@@ -85,10 +85,10 @@ function JobsPage() {
   useEffect(() => {
     const last = loadLastSearch();
     if (last) {
-      if (last.course) setCourse((c) => c || last.course!);
-      if (last.profession) setProfession((p) => p || last.profession!);
-      if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills!));
-      if (last.location) setLocation((l) => l || last.location!);
+      if (last.course) setCourse((c) => c || last.course || "");
+      if (last.profession) setProfession((p) => p || last.profession || "");
+      if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills || []));
+      if (last.location) setLocation((l) => l || last.location || "");
       if (last.remoteOnly) setRemoteOnly(true);
     }
     const a = loadAlert();

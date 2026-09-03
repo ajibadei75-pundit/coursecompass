@@ -149,7 +149,7 @@ function AssistantMessage({ text }: { text: string }) {
     <div className="flex justify-start group">
       <div className="relative max-w-[92%] glass rounded-2xl rounded-bl-sm px-5 py-4 text-sm leading-relaxed">
         <div
-          className="prose prose-sm prose-invert max-w-none
+           className="prose prose-sm dark:prose-invert max-w-none
             prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
             prose-h1:text-lg prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2
             prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-wider prose-h3:text-gold prose-h3:mt-4 prose-h3:mb-1.5

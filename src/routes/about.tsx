@@ -16,7 +16,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 prose prose-invert">
+       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 prose dark:prose-invert">
        <h1 className="font-display text-4xl font-semibold">About CourseandJobCompass</h1>
       <p className="text-muted-foreground mt-4 text-lg">
         Every year, millions of Nigerian students walk into universities feeling defeated. They wanted
