@@ -49,7 +49,7 @@ const POLL_MS = 5 * 60_000;
 function JobsPage() {
   const [course, setCourse] = useState("");
   const [profession, setProfession] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState("Nigeria");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [skillDraft, setSkillDraft] = useState("");
