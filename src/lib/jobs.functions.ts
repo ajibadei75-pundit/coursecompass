@@ -44,7 +44,7 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
           output: Output.object({ schema: z.object({ roles: z.array(z.string()).min(3).max(8) }) }),
         });
         const ai = (output as { roles: string[] }).roles.filter(Boolean);
-        if (ai.length) roles = ai;
+        if (ai.length) roles = data.profession.trim() ? [data.profession.trim(), ...ai] : ai;
       } catch {
         notice = "Using our built-in course→role map (AI matcher unavailable right now).";
       }

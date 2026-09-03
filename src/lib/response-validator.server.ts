@@ -74,7 +74,7 @@ FORBIDDEN
 
 export const VALIDATOR_SYSTEM_PROMPT = `You are the CourseandJobCompass Response Validator.
 
-A drafting model wrote a draft answer for a Nigerian student. Your job: rewrite the draft so it matches the CourseCompass house style EXACTLY. Do not answer the question from scratch — preserve the draft's facts and recommendations, only restructure, tighten, and add the citation block.
+A drafting model wrote a draft answer for a Nigerian student. Your job: rewrite the draft so it matches the CourseandJobCompass house style EXACTLY. Do not answer the question from scratch — preserve the draft's facts and recommendations, only restructure, tighten, and add the citation block.
 
 If the draft contains a claim with no source, either:
   (a) add a plausible source category in Sources & confidence, or
@@ -96,10 +96,10 @@ export function buildValidatorPrompt(userQuestion: string, draftAnswer: string) 
 ${userQuestion}
 """
 
-Draft answer to rewrite into CourseCompass house style:
+Draft answer to rewrite into CourseandJobCompass house style:
 """
 ${draftAnswer}
 """
 
-Rewrite the draft into the final CourseCompass answer now.`;
+Rewrite the draft into the final CourseandJobCompass answer now.`;
 }

@@ -8,18 +8,20 @@ import { DragAnalyze } from "@/components/site/DragAnalyze";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CourseCompass — Understand Your Course, Build Your Future" },
+       { title: "CourseandJobCompass — Courses, Careers & Jobs in Nigeria" },
       {
         name: "description",
         content:
-          "Got placed in a course you didn't choose? Discover the real opportunities, salaries, skills and AI impact of every Nigerian university course.",
+           "Understand your Nigerian university course, build useful skills, and find a career or job that fits you.",
       },
-      { property: "og:title", content: "CourseCompass" },
+       { property: "og:title", content: "CourseandJobCompass" },
       {
         property: "og:description",
         content:
-          "AI-powered Nigerian course intelligence: careers, salaries, skills, software, and roadmaps for every course.",
+           "A practical Nigerian guide to courses, careers, skills and relevant jobs.",
       },
+       { property: "og:type", content: "website" },
+       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LandingPage,
@@ -81,13 +83,12 @@ function Hero() {
             <Sparkles className="size-3.5" /> Built for Nigerian students
           </span>
           <h1 className="mt-5 font-display text-4xl sm:text-6xl font-bold leading-[1.05]">
-            Helping students understand their future{" "}
-            <span className="text-gradient-brand">before it's too late.</span>
+             Turn your course into a clearer career path{" "}
+             <span className="text-gradient-brand">with the right next step.</span>
           </h1>
           <p className="mt-5 text-lg text-muted-foreground max-w-2xl">
-            You didn't get Medicine — you got Physiology. Or MLS. Or Statistics. Or Yoruba.
-            Before you panic or change school, understand what your course really offers in Nigeria
-            and the world.
+             CourseandJobCompass connects Nigerian students to clear course intelligence, practical skills,
+             profession-based job matching and grounded career guidance.
           </p>
 
           <form onSubmit={onSubmit} className="mt-8 max-w-xl space-y-3">
@@ -147,10 +148,10 @@ function Hero() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl">
-            <CtaCard to="/jobs" icon={<Briefcase className="size-4" />} title="Job Match" desc="Live jobs for your course & skills" />
+             <CtaCard to="/jobs" icon={<Briefcase className="size-4" />} title="Nigeria Job Match" desc="Jobs ranked by profession & skills" />
             <CtaCard to="/match" icon={<Brain className="size-4" />} title="Course Match Test" desc="20 questions → best-fit courses" />
-            <CtaCard to="/chat" icon={<MessageSquare className="size-4" />} title="AI Career Chat" desc="Ask anything about your future" />
-            <CtaCard to="/courses" icon={<Compass className="size-4" />} title="Browse Courses" desc="Every Nigerian degree, decoded" />
+             <CtaCard to="/chat" icon={<MessageSquare className="size-4" />} title="Research Assistant" desc="Ask with current web context" />
+             <CtaCard to="/courses" icon={<Compass className="size-4" />} title="Course Intelligence" desc="Decode Nigerian degrees" />
           </div>
         </div>
       </div>
@@ -214,7 +215,7 @@ function SampleProfile() {
       <div className="glass rounded-2xl p-6 sm:p-8">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <div className="text-xs uppercase tracking-wider text-gold">Sample profile preview</div>
+             <div className="text-xs uppercase tracking-wider text-gold">Course intelligence preview</div>
             <h3 className="font-display text-2xl sm:text-3xl font-semibold mt-1">Physiology</h3>
             <p className="text-muted-foreground text-sm mt-1 max-w-xl">
               "I wanted Medicine but got Physiology" — here's what that actually means.
@@ -283,7 +284,7 @@ function FinalCta() {
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
       <div className="glass rounded-2xl p-8 sm:p-12 text-center">
         <h2 className="font-display text-3xl sm:text-4xl font-semibold">
-          Your course isn't a sentence. It's a starting point.
+           Your course is a starting point, not a limitation.
         </h2>
         <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
           Discover the real opportunities inside your degree — before you waste four years assuming the worst.
