@@ -20,6 +20,8 @@ export const Route = createFileRoute("/")({
         content:
            "A practical Nigerian guide to courses, careers, skills and relevant jobs.",
       },
+       { property: "og:type", content: "website" },
+       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LandingPage,

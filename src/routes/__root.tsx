@@ -95,8 +95,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "CourseandJobCompass — Courses, Careers & Jobs in Nigeria" },
       { name: "twitter:description", content: "A practical Nigerian guide to choosing courses, building skills and finding relevant work." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bd56c7a7-aae8-4717-a0f6-58956d371561/id-preview-0295a4c4--2bf8e076-65ff-43ac-bf11-0a2252e5021f.lovable.app-1782785617951.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

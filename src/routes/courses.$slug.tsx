@@ -19,6 +19,8 @@ export const Route = createFileRoute("/courses/$slug")({
           property: "og:description",
           content: `Real opportunities, salaries and skills for ${name} in Nigeria.`,
         },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },

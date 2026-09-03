@@ -77,7 +77,7 @@ function JobsPage() {
       seenRef.current = new Set(d.jobs.map((j) => j.id));
       setNewIds([]);
       setLastCheck(d.fetchedAt);
-    saveLastSearch({ course, skills, location, remoteOnly });
+    saveLastSearch({ course, profession, skills, location, remoteOnly });
     },
   });
 
@@ -86,6 +86,7 @@ function JobsPage() {
     const last = loadLastSearch();
     if (last) {
       if (last.course) setCourse((c) => c || last.course!);
+      if (last.profession) setProfession((p) => p || last.profession!);
       if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills!));
       if (last.location) setLocation((l) => l || last.location!);
       if (last.remoteOnly) setRemoteOnly(true);
@@ -117,7 +118,7 @@ function JobsPage() {
       res.jobs.forEach((j) => seenRef.current.add(j.id));
       setLastCheck(res.fetchedAt);
       saveAlert({
-        course, skills, location, remoteOnly, minScore,
+        course, profession, skills, location, remoteOnly, minScore,
         enabled: true, seen: [...seenRef.current], lastRun: res.fetchedAt,
       });
     } catch {
@@ -147,7 +148,7 @@ function JobsPage() {
     const perm = await requestNotifyPermission();
     setAlertOn(true);
     saveAlert({
-      course, skills, location, remoteOnly, minScore,
+      course, profession, skills, location, remoteOnly, minScore,
       enabled: true, seen: [...seenRef.current], lastRun: new Date().toISOString(),
     });
     setAlertMsg(

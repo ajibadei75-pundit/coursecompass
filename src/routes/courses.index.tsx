@@ -15,6 +15,8 @@ export const Route = createFileRoute("/courses/")({
       },
        { property: "og:title", content: "Browse Courses — CourseandJobCompass" },
       { property: "og:description", content: "Discover the truth about every Nigerian university course." },
+       { property: "og:type", content: "website" },
+       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CoursesPage,

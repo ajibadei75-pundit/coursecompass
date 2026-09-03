@@ -54,6 +54,8 @@ export const Route = createFileRoute("/match")({
       { name: "description", content: "Discover the Nigerian university courses that truly match your mind and personality." },
       { property: "og:title", content: "Course Match Test — CourseandJobCompass" },
       { property: "og:description", content: "Take a 20-question quiz to find your best-fit Nigerian university course." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MatchPage,

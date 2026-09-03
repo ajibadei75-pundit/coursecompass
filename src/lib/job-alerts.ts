@@ -2,6 +2,7 @@ import type { JobHit } from "./jobs-utils";
 
 export type AlertConfig = {
   course: string;
+  profession?: string;
   skills: string[];
   location: string;
   remoteOnly: boolean;
@@ -50,6 +51,7 @@ export function loadLastSearch(): Partial<AlertConfig> | null {
 
 export function saveLastSearch(v: {
   course: string;
+  profession?: string;
   skills: string[];
   location: string;
   remoteOnly: boolean;
@@ -81,7 +83,7 @@ export function notifyNewJobs(jobs: JobHit[]) {
       ? `${top.title} — ${top.company} (${top.score}% match)`
       : `${top.title} at ${top.company} + ${jobs.length - 1} more matches`;
   try {
-    const n = new Notification("CourseCompass · new job match", { body, tag: "cc-jobs" });
+    const n = new Notification("CourseandJobCompass · new job match", { body, tag: "cjc-jobs" });
     n.onclick = () => {
       window.focus();
       window.open(top.url, "_blank", "noopener");
