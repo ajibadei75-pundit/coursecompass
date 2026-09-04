@@ -169,10 +169,16 @@ export async function aggregateJobs(
   const terms = [...new Set([...roles, ...skills])].filter(Boolean).slice(0, 5);
   const batches = await Promise.all([
     ...terms.map((t) => cached(`remotive:${t}`, 5 * 60_000, () => fromRemotive(t))),
-    ...terms.slice(0, 3).map((t) => cached(`jobicy:${t}`, 5 * 60_000, () => fromJobicy(t.split(" ")[0]))),
-    ...terms.slice(0, 3).map((t) =>
-      cached(`muse:${t}:${location}:${country}`, 5 * 60_000, () => fromTheMuse(t, location || country)),
-    ),
+    ...terms
+      .slice(0, 3)
+      .map((t) => cached(`jobicy:${t}`, 5 * 60_000, () => fromJobicy(t.split(" ")[0]))),
+    ...terms
+      .slice(0, 3)
+      .map((t) =>
+        cached(`muse:${t}:${location}:${country}`, 5 * 60_000, () =>
+          fromTheMuse(t, location || country),
+        ),
+      ),
     fromArbeitnow(),
     fromRemoteOk(),
   ]);
@@ -192,12 +198,28 @@ export async function aggregateJobs(
 }
 
 const NG_CITIES = [
-  "lagos", "abuja", "ibadan", "port harcourt", "kano", "benin", "enugu", "abeokuta",
-  "ilorin", "kaduna", "jos", "uyo", "calabar", "owerri", "warri", "akure", "nigeria",
+  "lagos",
+  "abuja",
+  "ibadan",
+  "port harcourt",
+  "kano",
+  "benin",
+  "enugu",
+  "abeokuta",
+  "ilorin",
+  "kaduna",
+  "jos",
+  "uyo",
+  "calabar",
+  "owerri",
+  "warri",
+  "akure",
+  "nigeria",
 ];
 
 const NIGERIA_RELEVANT = /nigeria|remote|africa|emea|worldwide|anywhere|global|work from home/i;
-const NIGERIA_ONLY_EXCLUSIONS = /united states|u\.s\.?a?\.?|canada|united kingdom|uk|europe|germany|france|spain|india|australia|singapore/i;
+const NIGERIA_ONLY_EXCLUSIONS =
+  /united states|u\.s\.?a?\.?|canada|united kingdom|uk|europe|germany|france|spain|india|australia|singapore/i;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -293,7 +315,14 @@ export function scoreJobs(
     if (/intern|graduate|junior|entry|trainee/.test(title)) score += 6;
 
     const normalised = Math.max(0, Math.min(100, Math.round(score)));
-    return { ...j, score: normalised, matched: [...new Set(matched)].slice(0, 6), roleSignal, skillSignal, marketRelevant };
+    return {
+      ...j,
+      score: normalised,
+      matched: [...new Set(matched)].slice(0, 6),
+      roleSignal,
+      skillSignal,
+      marketRelevant,
+    };
   });
 
   return scored

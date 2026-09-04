@@ -35,14 +35,18 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
       try {
         const { generateText, Output } = await import("ai");
         const { createLovableAiGatewayProvider } = await import("./ai-gateway.server");
-        const gateway = createLovableAiGatewayProvider(process.env.LOVABLE_API_KEY ?? "", undefined, {
-          structuredOutputs: true,
-        });
+        const gateway = createLovableAiGatewayProvider(
+          process.env.LOVABLE_API_KEY ?? "",
+          undefined,
+          {
+            structuredOutputs: true,
+          },
+        );
         const { output } = await generateText({
           model: gateway("google/gemini-flash-lite-latest"),
           system:
             `You map university courses, a target profession, and extra skills to realistic job titles in ${country} and remote roles open to people there. ` +
-              "Prioritize the target profession, then course-aligned roles and skill-adjacent roles. Return 6 concrete, searchable job titles (no seniority fluff), ordered by best fit.",
+            "Prioritize the target profession, then course-aligned roles and skill-adjacent roles. Return 6 concrete, searchable job titles (no seniority fluff), ordered by best fit.",
           prompt: `Country: ${country}. Course: ${data.course}. Target profession: ${data.profession || "not specified"}. Extra skills: ${data.skills.join(", ") || "none"}. Preferred location: ${location}.`,
           output: Output.object({ schema: z.object({ roles: z.array(z.string()).min(3).max(8) }) }),
         });
@@ -69,6 +73,8 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
         name: import("./jobs-utils").JobSource;
         count: number;
       }[],
-      notice: jobs.length ? notice : notice ?? "No live matches right now — try the platform links below.",
+      notice: jobs.length
+        ? notice
+        : (notice ?? "No live matches right now — try the platform links below."),
     };
   });
