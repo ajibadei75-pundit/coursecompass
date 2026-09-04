@@ -10,6 +10,7 @@ import {
 import { searchJobsForCourse } from "@/lib/jobs.functions";
 import {
   platformLinks, postedLabel, daysAgo, ALL_SOURCES,
+  JOB_MARKETS,
   type JobSearchResult, type JobSource, type JobHit,
 } from "@/lib/jobs-utils";
 import {
@@ -49,6 +50,7 @@ const POLL_MS = 5 * 60_000;
 function JobsPage() {
   const [course, setCourse] = useState("");
   const [profession, setProfession] = useState("");
+  const [country, setCountry] = useState("Nigeria");
   const [location, setLocation] = useState("Nigeria");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -72,12 +74,12 @@ function JobsPage() {
   const run = useServerFn(searchJobsForCourse);
   const mutation = useMutation({
     mutationFn: (): Promise<JobSearchResult> =>
-      run({ data: { course, profession, skills, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
+       run({ data: { course, profession, skills, country, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
     onSuccess: (d) => {
       seenRef.current = new Set(d.jobs.map((j) => j.id));
       setNewIds([]);
       setLastCheck(d.fetchedAt);
-    saveLastSearch({ course, profession, skills, location, remoteOnly });
+      saveLastSearch({ course, profession, skills, country, location, remoteOnly });
     },
   });
 
@@ -88,6 +90,7 @@ function JobsPage() {
       if (last.course) setCourse((c) => c || last.course || "");
       if (last.profession) setProfession((p) => p || last.profession || "");
       if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills || []));
+      if (last.country) setCountry((c) => c === "Nigeria" ? last.country || "Nigeria" : c);
       if (last.location) setLocation((l) => l || last.location || "");
       if (last.remoteOnly) setRemoteOnly(true);
     }
@@ -105,7 +108,7 @@ function JobsPage() {
     if (!course.trim()) return;
     try {
       const res = (await run({
-        data: { course, profession, skills, location, remoteOnly, quiet: true },
+        data: { course, profession, skills, country, location, remoteOnly, quiet: true },
       })) as JobSearchResult;
       const fresh = res.jobs.filter((j) => !seenRef.current.has(j.id) && j.score >= Math.max(minScore, 25));
       if (fresh.length) {
@@ -118,14 +121,14 @@ function JobsPage() {
       res.jobs.forEach((j) => seenRef.current.add(j.id));
       setLastCheck(res.fetchedAt);
       saveAlert({
-        course, profession, skills, location, remoteOnly, minScore,
+        course, profession, skills, country, location, remoteOnly, minScore,
         enabled: true, seen: [...seenRef.current], lastRun: res.fetchedAt,
       });
     } catch {
       /* silent — alerts are best-effort */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course, profession, skills, location, remoteOnly, minScore, run]);
+  }, [course, profession, skills, country, location, remoteOnly, minScore, run]);
 
   // Polling while alerts are on
   useEffect(() => {
@@ -148,7 +151,7 @@ function JobsPage() {
     const perm = await requestNotifyPermission();
     setAlertOn(true);
     saveAlert({
-      course, profession, skills, location, remoteOnly, minScore,
+      course, profession, skills, country, location, remoteOnly, minScore,
       enabled: true, seen: [...seenRef.current], lastRun: new Date().toISOString(),
     });
     setAlertMsg(
@@ -175,7 +178,9 @@ function JobsPage() {
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`,
           );
           const d = await r.json();
-          setLocation([d.city || d.locality, d.countryName].filter(Boolean).join(", "));
+          const detectedCountry = String(d.countryName || "Nigeria");
+          setCountry(JOB_MARKETS.includes(detectedCountry as (typeof JOB_MARKETS)[number]) ? detectedCountry : "Other country");
+          setLocation([d.city || d.locality, detectedCountry].filter(Boolean).join(", "));
         } catch {
           setLocation("");
         } finally {
@@ -199,8 +204,8 @@ function JobsPage() {
   }, [jobs, activeSources, minScore, maxAge, sort]);
 
   const links = useMemo(
-    () => platformLinks(profession || mutation.data?.roles?.[0] || course || "graduate", location),
-    [mutation.data, course, location],
+    () => platformLinks(profession || mutation.data?.roles?.[0] || course || "graduate", location, country),
+    [mutation.data, course, location, country],
   );
 
   const canSearch = course.trim().length > 1 && !mutation.isPending;
@@ -245,12 +250,26 @@ function JobsPage() {
             />
           </Field>
 
-          <Field label="Location">
+           <Field label="Country">
+             <Globe2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+             <select
+               value={country}
+               onChange={(e) => {
+                 const next = e.target.value;
+                 setCountry(next);
+                 if (next !== "Other country") setLocation(next === "Nigeria" ? "Nigeria" : next);
+               }}
+               className="input-field pl-10"
+             >
+               {JOB_MARKETS.map((market) => <option key={market} value={market}>{market}</option>)}
+             </select>
+           </Field>
+           <Field label="City or area (optional)">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-               placeholder="Nigeria, Lagos"
+               placeholder={country === "Nigeria" ? "Nigeria or Lagos" : `${country} or a city`}
               className="input-field pl-10 pr-32"
             />
            <button
@@ -325,7 +344,7 @@ function JobsPage() {
             className="relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-gradient-brand px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 transition hover:shadow-[0_10px_40px_-12px_var(--glow)]"
           >
             {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-             {mutation.isPending ? "Matching Nigeria jobs…" : "Find my jobs"}
+            {mutation.isPending ? `Matching ${country} jobs…` : "Find my jobs"}
           </button>
 
           <button
