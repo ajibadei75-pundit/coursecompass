@@ -138,8 +138,6 @@ function JobsPage() {
     }
   }, []);
 
-  const jobs = mutation.data?.jobs ?? [];
-
   const checkForNew = useCallback(async () => {
     if (!course.trim()) return;
     try {
@@ -252,6 +250,7 @@ function JobsPage() {
   };
 
   const visible = useMemo(() => {
+    const jobs = mutation.data?.jobs ?? [];
     let list = jobs.filter((j) => activeSources.includes(j.source) && j.score >= minScore);
     if (maxAge > 0) list = list.filter((j) => (daysAgo(j.postedAt) ?? 999) <= maxAge);
     if (sort === "recent") {
@@ -260,7 +259,7 @@ function JobsPage() {
       );
     }
     return list;
-  }, [jobs, activeSources, minScore, maxAge, sort]);
+  }, [mutation.data?.jobs, activeSources, minScore, maxAge, sort]);
 
   const links = useMemo(
     () =>
@@ -269,7 +268,7 @@ function JobsPage() {
         location,
         country,
       ),
-    [mutation.data, course, location, country],
+    [mutation.data, course, profession, location, country],
   );
 
   const canSearch = course.trim().length > 1 && !mutation.isPending;
