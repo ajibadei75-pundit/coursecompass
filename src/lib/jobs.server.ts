@@ -160,16 +160,25 @@ async function fromTheMuse(term: string, location: string): Promise<JobHit[]> {
 
 export async function aggregateJobs(
   roles: string[],
-  _skills: string[],
+  skills: string[],
   location = "",
+  country = "Nigeria",
 ): Promise<JobHit[]> {
-  const terms = roles.slice(0, 3);
+  // Search the course-derived roles first, then search skill terms directly so
+  // a transferable skill can surface a job even when the title differs.
+  const terms = [...new Set([...roles, ...skills])].filter(Boolean).slice(0, 5);
   const batches = await Promise.all([
     ...terms.map((t) => cached(`remotive:${t}`, 5 * 60_000, () => fromRemotive(t))),
-    ...terms.slice(0, 2).map((t) => cached(`jobicy:${t}`, 5 * 60_000, () => fromJobicy(t.split(" ")[0]))),
-    ...terms.slice(0, 2).map((t) =>
-      cached(`muse:${t}:${location}`, 5 * 60_000, () => fromTheMuse(t, location)),
-    ),
+    ...terms
+      .slice(0, 3)
+      .map((t) => cached(`jobicy:${t}`, 5 * 60_000, () => fromJobicy(t.split(" ")[0]))),
+    ...terms
+      .slice(0, 3)
+      .map((t) =>
+        cached(`muse:${t}:${location}:${country}`, 5 * 60_000, () =>
+          fromTheMuse(t, location || country),
+        ),
+      ),
     fromArbeitnow(),
     fromRemoteOk(),
   ]);
@@ -188,12 +197,13 @@ export async function aggregateJobs(
   return all;
 }
 
-const NG_CITIES = [
-  "lagos", "abuja", "ibadan", "port harcourt", "kano", "benin", "enugu", "abeokuta",
-  "ilorin", "kaduna", "jos", "uyo", "calabar", "owerri", "warri", "akure", "nigeria",
-];
-
 const NIGERIA_RELEVANT = /nigeria|remote|africa|emea|worldwide|anywhere|global|work from home/i;
+const NIGERIA_ONLY_EXCLUSIONS =
+  /united states|u\.s\.?a?\.?|canada|united kingdom|uk|europe|germany|france|spain|india|australia|singapore/i;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function scoreJobs(
   jobs: JobHit[],
@@ -201,18 +211,23 @@ export function scoreJobs(
   skills: string[],
   location: string,
   remoteOnly: boolean,
+  country = "Nigeria",
 ): JobHit[] {
   const roleWords = roles.flatMap((r) => r.toLowerCase().split(/\s+/)).filter((w) => w.length > 3);
   const skillList = skills.map((s) => s.toLowerCase().trim()).filter(Boolean);
   const loc = location.toLowerCase().trim();
   const locTokens = loc.split(/[,\s]+/).filter((t) => t.length > 2);
-  const wantsNigeria = !loc || NG_CITIES.some((c) => loc.includes(c)) || loc.includes("nigeria");
+  const market = country.trim() || "Nigeria";
+  const wantsNigeria = market.toLowerCase() === "nigeria";
+  const marketPattern = new RegExp(escapeRegExp(market), "i");
 
   const scored = jobs.map((j) => {
     const title = j.title.toLowerCase();
     const hay = `${j.title} ${j.tags.join(" ")} ${j.excerpt}`.toLowerCase();
     const matched: string[] = [];
     let score = 0;
+    let roleSignal = false;
+    let skillSignal = false;
 
     // Exact / partial role title matching, weighted by role rank.
     roles.forEach((r, i) => {
@@ -220,30 +235,44 @@ export function scoreJobs(
       if (title === rl) {
         score += 50 - i * 3;
         matched.push(r);
+        roleSignal = true;
       } else if (title.includes(rl)) {
         score += 40 - i * 3;
         matched.push(r);
+        roleSignal = true;
       }
     });
     for (const w of new Set(roleWords)) {
-      if (title.includes(w)) score += 8;
-      else if (hay.includes(w)) score += 4;
+      if (title.includes(w)) {
+        score += 8;
+        roleSignal = true;
+      } else if (hay.includes(w)) {
+        score += 4;
+        roleSignal = true;
+      }
     }
 
     for (const s of skillList) {
       if (title.includes(s)) {
         score += 18;
         matched.push(s);
+        skillSignal = true;
       } else if (hay.includes(s)) {
         score += 12;
         matched.push(s);
+        skillSignal = true;
       }
     }
 
-    // Location fit: Nigeria is the default market, while clearly localised
-    // non-Nigerian roles are not allowed to outrank relevant opportunities.
+    // Location fit: Nigeria is the default market and excludes listings that
+    // are explicitly tied to another country. Generic worldwide remote roles
+    // remain eligible because they can be applied to from Nigeria.
     const jl = `${j.location}`.toLowerCase();
-    if (wantsNigeria && !NIGERIA_RELEVANT.test(jl)) score -= 18;
+    const marketRelevant = wantsNigeria
+      ? NIGERIA_RELEVANT.test(jl) && !NIGERIA_ONLY_EXCLUSIONS.test(jl)
+      : marketPattern.test(jl) || NIGERIA_RELEVANT.test(jl);
+    if (wantsNigeria && !marketRelevant) score -= 45;
+    if (!wantsNigeria && !marketRelevant) score -= 16;
     if (locTokens.some((t) => jl.includes(t))) {
       score += 22;
       matched.push(location);
@@ -266,12 +295,19 @@ export function scoreJobs(
     if (/intern|graduate|junior|entry|trainee/.test(title)) score += 6;
 
     const normalised = Math.max(0, Math.min(100, Math.round(score)));
-    return { ...j, score: normalised, matched: [...new Set(matched)].slice(0, 6) };
+    return {
+      ...j,
+      score: normalised,
+      matched: [...new Set(matched)].slice(0, 6),
+      roleSignal,
+      skillSignal,
+      marketRelevant,
+    };
   });
 
   return scored
     .filter((j) => (remoteOnly ? j.remote : true))
-    .filter((j) => j.score > 18)
+    .filter((j) => j.marketRelevant && (j.roleSignal || j.skillSignal) && j.score > 18)
     .sort((a, b) => b.score - a.score)
     .slice(0, 60);
 }

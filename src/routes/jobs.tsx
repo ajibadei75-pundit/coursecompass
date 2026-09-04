@@ -3,33 +3,60 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Briefcase, MapPin, Loader2, Sparkles, Search, X, Plus, Globe2,
-  Building2, ArrowUpRight, Wifi, LocateFixed, Bell, BellRing, SlidersHorizontal,
-  RefreshCw, Clock, Flame,
+  Briefcase,
+  MapPin,
+  Loader2,
+  Sparkles,
+  Search,
+  X,
+  Plus,
+  Globe2,
+  Building2,
+  ArrowUpRight,
+  Wifi,
+  LocateFixed,
+  Bell,
+  BellRing,
+  SlidersHorizontal,
+  RefreshCw,
+  Clock,
+  Flame,
 } from "lucide-react";
 import { searchJobsForCourse } from "@/lib/jobs.functions";
 import {
-  platformLinks, postedLabel, daysAgo, ALL_SOURCES,
-  type JobSearchResult, type JobSource, type JobHit,
+  platformLinks,
+  postedLabel,
+  daysAgo,
+  ALL_SOURCES,
+  JOB_MARKETS,
+  type JobSearchResult,
+  type JobSource,
+  type JobHit,
 } from "@/lib/jobs-utils";
 import {
-  loadAlert, saveAlert, clearAlert, loadLastSearch, saveLastSearch,
-  requestNotifyPermission, notifyNewJobs,
+  loadAlert,
+  saveAlert,
+  clearAlert,
+  loadLastSearch,
+  saveLastSearch,
+  requestNotifyPermission,
+  notifyNewJobs,
 } from "@/lib/job-alerts";
 
 export const Route = createFileRoute("/jobs")({
   head: () => ({
     meta: [
-       { title: "Nigeria Job Match & Alerts | CourseandJobCompass" },
+      { title: "Nigeria Job Match & Alerts | CourseandJobCompass" },
       {
         name: "description",
-         content:
-           "Find Nigeria-first jobs matched to your profession, university course, skills and location, with alerts for new opportunities.",
+        content:
+          "Find Nigeria-first jobs matched to your profession, university course, skills and location, with alerts for new opportunities.",
       },
-       { property: "og:title", content: "Nigeria Job Match & Alerts — CourseandJobCompass" },
+      { property: "og:title", content: "Nigeria Job Match & Alerts — CourseandJobCompass" },
       {
         property: "og:description",
-        content: "Live matches from five job boards, ranked by course, skills and location, with real-time job alerts.",
+        content:
+          "Live matches from five job boards, ranked by course, skills and location, with real-time job alerts.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -39,8 +66,16 @@ export const Route = createFileRoute("/jobs")({
 });
 
 const SKILL_SUGGESTIONS = [
-  "Excel", "SQL", "Python", "Graphic Design", "Content Writing", "Data Analysis",
-  "Customer Support", "Digital Marketing", "Project Management", "Figma",
+  "Excel",
+  "SQL",
+  "Python",
+  "Graphic Design",
+  "Content Writing",
+  "Data Analysis",
+  "Customer Support",
+  "Digital Marketing",
+  "Project Management",
+  "Figma",
 ];
 
 type SortKey = "match" | "recent";
@@ -49,6 +84,7 @@ const POLL_MS = 5 * 60_000;
 function JobsPage() {
   const [course, setCourse] = useState("");
   const [profession, setProfession] = useState("");
+  const [country, setCountry] = useState("Nigeria");
   const [location, setLocation] = useState("Nigeria");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -72,12 +108,14 @@ function JobsPage() {
   const run = useServerFn(searchJobsForCourse);
   const mutation = useMutation({
     mutationFn: (): Promise<JobSearchResult> =>
-      run({ data: { course, profession, skills, location, remoteOnly, quiet: false } }) as Promise<JobSearchResult>,
+      run({
+        data: { course, profession, skills, country, location, remoteOnly, quiet: false },
+      }) as Promise<JobSearchResult>,
     onSuccess: (d) => {
       seenRef.current = new Set(d.jobs.map((j) => j.id));
       setNewIds([]);
       setLastCheck(d.fetchedAt);
-    saveLastSearch({ course, profession, skills, location, remoteOnly });
+      saveLastSearch({ course, profession, skills, country, location, remoteOnly });
     },
   });
 
@@ -88,6 +126,7 @@ function JobsPage() {
       if (last.course) setCourse((c) => c || last.course || "");
       if (last.profession) setProfession((p) => p || last.profession || "");
       if (last.skills?.length) setSkills((s) => (s.length ? s : last.skills || []));
+      if (last.country) setCountry((c) => (c === "Nigeria" ? last.country || "Nigeria" : c));
       if (last.location) setLocation((l) => l || last.location || "");
       if (last.remoteOnly) setRemoteOnly(true);
     }
@@ -99,15 +138,15 @@ function JobsPage() {
     }
   }, []);
 
-  const jobs = mutation.data?.jobs ?? [];
-
   const checkForNew = useCallback(async () => {
     if (!course.trim()) return;
     try {
       const res = (await run({
-        data: { course, profession, skills, location, remoteOnly, quiet: true },
+        data: { course, profession, skills, country, location, remoteOnly, quiet: true },
       })) as JobSearchResult;
-      const fresh = res.jobs.filter((j) => !seenRef.current.has(j.id) && j.score >= Math.max(minScore, 25));
+      const fresh = res.jobs.filter(
+        (j) => !seenRef.current.has(j.id) && j.score >= Math.max(minScore, 25),
+      );
       if (fresh.length) {
         notifyNewJobs(fresh);
         setNewIds((p) => [...new Set([...p, ...fresh.map((j) => j.id)])]);
@@ -118,14 +157,22 @@ function JobsPage() {
       res.jobs.forEach((j) => seenRef.current.add(j.id));
       setLastCheck(res.fetchedAt);
       saveAlert({
-        course, profession, skills, location, remoteOnly, minScore,
-        enabled: true, seen: [...seenRef.current], lastRun: res.fetchedAt,
+        course,
+        profession,
+        skills,
+        country,
+        location,
+        remoteOnly,
+        minScore,
+        enabled: true,
+        seen: [...seenRef.current],
+        lastRun: res.fetchedAt,
       });
     } catch {
       /* silent — alerts are best-effort */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course, profession, skills, location, remoteOnly, minScore, run]);
+  }, [course, profession, skills, country, location, remoteOnly, minScore, run]);
 
   // Polling while alerts are on
   useEffect(() => {
@@ -148,8 +195,16 @@ function JobsPage() {
     const perm = await requestNotifyPermission();
     setAlertOn(true);
     saveAlert({
-      course, profession, skills, location, remoteOnly, minScore,
-      enabled: true, seen: [...seenRef.current], lastRun: new Date().toISOString(),
+      course,
+      profession,
+      skills,
+      country,
+      location,
+      remoteOnly,
+      minScore,
+      enabled: true,
+      seen: [...seenRef.current],
+      lastRun: new Date().toISOString(),
     });
     setAlertMsg(
       perm === "granted"
@@ -160,7 +215,8 @@ function JobsPage() {
 
   const addSkill = (raw: string) => {
     const s = raw.trim();
-    if (!s || skills.length >= 15 || skills.some((x) => x.toLowerCase() === s.toLowerCase())) return;
+    if (!s || skills.length >= 15 || skills.some((x) => x.toLowerCase() === s.toLowerCase()))
+      return;
     setSkills((p) => [...p, s]);
     setSkillDraft("");
   };
@@ -175,7 +231,13 @@ function JobsPage() {
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`,
           );
           const d = await r.json();
-          setLocation([d.city || d.locality, d.countryName].filter(Boolean).join(", "));
+          const detectedCountry = String(d.countryName || "Nigeria");
+          setCountry(
+            JOB_MARKETS.includes(detectedCountry as (typeof JOB_MARKETS)[number])
+              ? detectedCountry
+              : "Other country",
+          );
+          setLocation([d.city || d.locality, detectedCountry].filter(Boolean).join(", "));
         } catch {
           setLocation("");
         } finally {
@@ -188,6 +250,7 @@ function JobsPage() {
   };
 
   const visible = useMemo(() => {
+    const jobs = mutation.data?.jobs ?? [];
     let list = jobs.filter((j) => activeSources.includes(j.source) && j.score >= minScore);
     if (maxAge > 0) list = list.filter((j) => (daysAgo(j.postedAt) ?? 999) <= maxAge);
     if (sort === "recent") {
@@ -196,11 +259,16 @@ function JobsPage() {
       );
     }
     return list;
-  }, [jobs, activeSources, minScore, maxAge, sort]);
+  }, [mutation.data?.jobs, activeSources, minScore, maxAge, sort]);
 
   const links = useMemo(
-    () => platformLinks(profession || mutation.data?.roles?.[0] || course || "graduate", location),
-    [mutation.data, course, location],
+    () =>
+      platformLinks(
+        profession || mutation.data?.roles?.[0] || course || "graduate",
+        location,
+        country,
+      ),
+    [mutation.data, course, profession, location, country],
   );
 
   const canSearch = course.trim().length > 1 && !mutation.isPending;
@@ -208,22 +276,22 @@ function JobsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
       <header className="max-w-2xl">
-         <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
-           <Briefcase className="size-3.5" /> Nigeria-first job intelligence
+        <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
+          <Briefcase className="size-3.5" /> Nigeria-first job intelligence
         </span>
         <h1 className="mt-4 font-display text-4xl sm:text-5xl font-bold leading-tight">
-           Your next opportunity, matched to{" "}
-           <span className="text-gradient-brand">your profession</span>
+          Your next opportunity, matched to{" "}
+          <span className="text-gradient-brand">your profession</span>
         </h1>
         <p className="mt-4 text-muted-foreground">
-           Start with the work you want to do. We prioritise roles in Nigeria, then use your course,
-           additional skills and location to rank relevant listings from live job sources.
+          Start with the work you want to do. We prioritise roles in Nigeria, then use your course,
+          additional skills and location to rank relevant listings from live job sources.
         </p>
       </header>
 
       {/* Search panel */}
       <section className="mt-8 glass rounded-2xl p-5 sm:p-6 animate-fade-in">
-         <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           <Field label="Target profession">
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
@@ -240,25 +308,47 @@ function JobsPage() {
               value={course}
               onChange={(e) => setCourse(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && canSearch && mutation.mutate()}
-               placeholder="e.g. Statistics, Mass Communication"
+              placeholder="e.g. Statistics, Mass Communication"
               className="input-field pl-10"
             />
           </Field>
 
-          <Field label="Location">
+          <Field label="Country">
+            <Globe2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <select
+              value={country}
+              onChange={(e) => {
+                const next = e.target.value;
+                setCountry(next);
+                if (next !== "Other country") setLocation(next === "Nigeria" ? "Nigeria" : next);
+              }}
+              className="input-field pl-10"
+            >
+              {JOB_MARKETS.map((market) => (
+                <option key={market} value={market}>
+                  {market}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="City or area (optional)">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-               placeholder="Nigeria, Lagos"
+              placeholder={country === "Nigeria" ? "Nigeria or Lagos" : `${country} or a city`}
               className="input-field pl-10 pr-32"
             />
-           <button
+            <button
               type="button"
               onClick={useMyLocation}
               className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/20 transition"
             >
-              {locating ? <Loader2 className="size-3.5 animate-spin" /> : <LocateFixed className="size-3.5" />}
+              {locating ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <LocateFixed className="size-3.5" />
+              )}
               Use my location
             </button>
           </Field>
@@ -276,7 +366,10 @@ function JobsPage() {
                 className="group inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-3 py-1.5 text-xs text-foreground animate-scale-in"
               >
                 {s}
-                <button onClick={() => setSkills((p) => p.filter((x) => x !== s))} aria-label={`Remove ${s}`}>
+                <button
+                  onClick={() => setSkills((p) => p.filter((x) => x !== s))}
+                  aria-label={`Remove ${s}`}
+                >
                   <X className="size-3 text-muted-foreground group-hover:text-destructive transition" />
                 </button>
               </span>
@@ -297,15 +390,17 @@ function JobsPage() {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {SKILL_SUGGESTIONS.filter((s) => !skills.includes(s)).slice(0, 8).map((s) => (
-              <button
-                key={s}
-                onClick={() => addSkill(s)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 transition hover-scale"
-              >
-                <Plus className="size-3" /> {s}
-              </button>
-            ))}
+            {SKILL_SUGGESTIONS.filter((s) => !skills.includes(s))
+              .slice(0, 8)
+              .map((s) => (
+                <button
+                  key={s}
+                  onClick={() => addSkill(s)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border/50 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 transition hover-scale"
+                >
+                  <Plus className="size-3" /> {s}
+                </button>
+              ))}
           </div>
         </div>
 
@@ -324,8 +419,12 @@ function JobsPage() {
             disabled={!canSearch}
             className="relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-gradient-brand px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 transition hover:shadow-[0_10px_40px_-12px_var(--glow)]"
           >
-            {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-             {mutation.isPending ? "Matching Nigeria jobs…" : "Find my jobs"}
+            {mutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+            {mutation.isPending ? `Matching ${country} jobs…` : "Find my jobs"}
           </button>
 
           <button
@@ -346,7 +445,11 @@ function JobsPage() {
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition"
             >
               <RefreshCw className="size-3.5" /> Check now
-              {lastCheck && <span className="opacity-70">· last {new Date(lastCheck).toLocaleTimeString()}</span>}
+              {lastCheck && (
+                <span className="opacity-70">
+                  · last {new Date(lastCheck).toLocaleTimeString()}
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -376,7 +479,10 @@ function JobsPage() {
               </h2>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {mutation.data.roles.map((r) => (
-                  <span key={r} className="rounded-full bg-surface-2/70 border border-border/50 px-2.5 py-1 text-[11px] text-muted-foreground">
+                  <span
+                    key={r}
+                    className="rounded-full bg-surface-2/70 border border-border/50 px-2.5 py-1 text-[11px] text-muted-foreground"
+                  >
                     {r}
                   </span>
                 ))}
@@ -391,7 +497,11 @@ function JobsPage() {
                     onClick={() => setSort(k)}
                     className={`px-3 py-2 transition ${sort === k ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    {k === "match" ? <Flame className="inline size-3.5 mr-1" /> : <Clock className="inline size-3.5 mr-1" />}
+                    {k === "match" ? (
+                      <Flame className="inline size-3.5 mr-1" />
+                    ) : (
+                      <Clock className="inline size-3.5 mr-1" />
+                    )}
                     {k === "match" ? "Best match" : "Newest"}
                   </button>
                 ))}
@@ -410,7 +520,11 @@ function JobsPage() {
               <label className="text-xs">
                 <span className="text-muted-foreground">Minimum match: {minScore}%</span>
                 <input
-                  type="range" min={0} max={90} step={5} value={minScore}
+                  type="range"
+                  min={0}
+                  max={90}
+                  step={5}
+                  value={minScore}
                   onChange={(e) => setMinScore(Number(e.target.value))}
                   className="mt-2 w-full accent-[var(--primary)]"
                 />
@@ -440,7 +554,9 @@ function JobsPage() {
                           setActiveSources((p) => (on ? p.filter((x) => x !== s) : [...p, s]))
                         }
                         className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
-                          on ? "border-primary/50 bg-primary/15 text-primary" : "border-border/50 text-muted-foreground"
+                          on
+                            ? "border-primary/50 bg-primary/15 text-primary"
+                            : "border-border/50 text-muted-foreground"
                         }`}
                       >
                         {s}
@@ -469,9 +585,9 @@ function JobsPage() {
           )}
 
           <div className="mt-10 glass rounded-2xl p-5">
-             <div className="text-sm font-medium">More places to find Nigerian opportunities</div>
+            <div className="text-sm font-medium">More places to find Nigerian opportunities</div>
             <p className="text-xs text-muted-foreground mt-1">
-               Pre-filled searches using your profession and location.
+              Pre-filled searches using your profession and location.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {links.map((l) => (
@@ -487,8 +603,10 @@ function JobsPage() {
               ))}
             </div>
             <p className="mt-4 text-[11px] text-muted-foreground">
-               Live listings are sourced from Remotive, Jobicy, Arbeitnow,{" "}
-              <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">Remote OK</a>{" "}
+              Live listings are sourced from Remotive, Jobicy, Arbeitnow,{" "}
+              <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">
+                Remote OK
+              </a>{" "}
               and The Muse.
             </p>
           </div>
@@ -545,7 +663,10 @@ function JobCard({ job: j, index, isNew }: { job: JobHit; index: number; isNew: 
       {j.matched.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {j.matched.map((m) => (
-            <span key={m} className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] text-gold">
+            <span
+              key={m}
+              className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] text-gold"
+            >
               {m}
             </span>
           ))}
@@ -553,7 +674,8 @@ function JobCard({ job: j, index, isNew }: { job: JobHit; index: number; isNew: 
       )}
 
       <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs text-primary">
-        View & apply <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
+        View & apply{" "}
+        <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
       </span>
     </a>
   );
@@ -577,7 +699,9 @@ function MatchRing({ score }: { score: number }) {
       }}
       title={`${score}% match`}
     >
-      <span className="absolute inset-[3px] rounded-full bg-surface grid place-items-center">{score}</span>
+      <span className="absolute inset-[3px] rounded-full bg-surface grid place-items-center">
+        {score}
+      </span>
     </div>
   );
 }
