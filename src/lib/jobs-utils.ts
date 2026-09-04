@@ -27,6 +27,18 @@ export type JobSearchResult = {
 
 export const ALL_SOURCES: JobSource[] = ["Remotive", "Jobicy", "Arbeitnow", "Remote OK", "The Muse"];
 
+export const JOB_MARKETS = [
+  "Nigeria",
+  "Ghana",
+  "Kenya",
+  "South Africa",
+  "United Kingdom",
+  "United States",
+  "Canada",
+  "Australia",
+  "Other country",
+] as const;
+
 /** Offline fallback: course slug fragment -> role keywords. */
 export const COURSE_ROLE_HINTS: { match: string[]; roles: string[] }[] = [
   { match: ["computer", "software", "information technology", "cyber"], roles: ["software engineer", "frontend developer", "backend developer", "IT support", "cybersecurity analyst"] },
@@ -42,8 +54,12 @@ export const COURSE_ROLE_HINTS: { match: string[]; roles: string[] }[] = [
 
 export function fallbackRoles(course: string): string[] {
   const c = course.toLowerCase();
-  const hit = COURSE_ROLE_HINTS.find((h) => h.match.some((m) => c.includes(m)));
-  return hit ? hit.roles : ["graduate trainee", "analyst", "operations associate", "customer support"];
+  const roles = COURSE_ROLE_HINTS
+    .filter((h) => h.match.some((m) => c.includes(m)))
+    .flatMap((h) => h.roles);
+  return roles.length
+    ? [...new Set(roles)].slice(0, 8)
+    : ["graduate trainee", "analyst", "operations associate", "customer support"];
 }
 
 export function daysAgo(iso?: string): number | null {
@@ -64,9 +80,9 @@ export function postedLabel(iso?: string): string {
 }
 
 /** Deep links into Nigerian + global platforms we can't call by API. */
-export function platformLinks(query: string, location: string) {
+export function platformLinks(query: string, location: string, country = "Nigeria") {
   const q = encodeURIComponent(query);
-  const loc = encodeURIComponent(location || "Nigeria");
+  const loc = encodeURIComponent(location || country || "Nigeria");
   return [
     { name: "Jobberman", url: `https://www.jobberman.com/jobs?q=${q}` },
     { name: "MyJobMag", url: `https://www.myjobmag.com/search/jobs?q=${q}` },

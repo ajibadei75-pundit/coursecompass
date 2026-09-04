@@ -4,6 +4,7 @@ export type AlertConfig = {
   course: string;
   profession?: string;
   skills: string[];
+  country?: string;
   location: string;
   remoteOnly: boolean;
   minScore: number;
@@ -53,6 +54,7 @@ export function saveLastSearch(v: {
   course: string;
   profession?: string;
   skills: string[];
+  country?: string;
   location: string;
   remoteOnly: boolean;
 }) {
