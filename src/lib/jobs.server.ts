@@ -197,26 +197,6 @@ export async function aggregateJobs(
   return all;
 }
 
-const NG_CITIES = [
-  "lagos",
-  "abuja",
-  "ibadan",
-  "port harcourt",
-  "kano",
-  "benin",
-  "enugu",
-  "abeokuta",
-  "ilorin",
-  "kaduna",
-  "jos",
-  "uyo",
-  "calabar",
-  "owerri",
-  "warri",
-  "akure",
-  "nigeria",
-];
-
 const NIGERIA_RELEVANT = /nigeria|remote|africa|emea|worldwide|anywhere|global|work from home/i;
 const NIGERIA_ONLY_EXCLUSIONS =
   /united states|u\.s\.?a?\.?|canada|united kingdom|uk|europe|germany|france|spain|india|australia|singapore/i;
