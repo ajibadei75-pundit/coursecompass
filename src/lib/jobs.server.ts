@@ -247,8 +247,10 @@ export function scoreJobs(
         score += 8;
         roleSignal = true;
       } else if (hay.includes(w)) {
-        score += 4;
-        roleSignal = true;
+        // A role keyword buried in an excerpt is useful context, but not
+        // strong enough to qualify a listing by itself. This keeps a mention
+        // of "analyst" from promoting an unrelated copywriter role.
+        score += 2;
       }
     }
 
