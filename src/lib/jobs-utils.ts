@@ -140,13 +140,20 @@ export function postedLabel(iso?: string): string {
 export function platformLinks(query: string, location: string, country = "Nigeria") {
   const q = encodeURIComponent(query);
   const loc = encodeURIComponent(location || country || "Nigeria");
-  const city = (location || "Lagos")
-    .split(",")[0]
-    .trim()
-    .replace(/\b(nigeria|remote|anywhere)\b/gi, "")
-    .trim() || "Lagos";
-  const citySlug = city.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const roleSlug = query.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const city =
+    (location || "Lagos")
+      .split(",")[0]
+      .trim()
+      .replace(/\b(nigeria|remote|anywhere)\b/gi, "")
+      .trim() || "Lagos";
+  const citySlug = city
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  const roleSlug = query
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
   return [
     {
       name: "Y Combinator",
