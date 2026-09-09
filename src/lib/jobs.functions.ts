@@ -24,8 +24,11 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
     const { aggregateJobs, scoreJobs } = await import("./jobs.server");
     const { fallbackRoles } = await import("./jobs-utils");
 
-    const country = data.country.trim() || "Nigeria";
-    const location = data.location.trim() || country;
+    const location = data.location.trim() || data.country.trim() || "Nigeria";
+    const country =
+      data.country.trim() === "Other country"
+        ? location.split(",").at(-1)?.trim() || "Nigeria"
+        : data.country.trim() || "Nigeria";
     let roles = data.profession.trim()
       ? [data.profession.trim(), ...fallbackRoles(data.course)]
       : fallbackRoles(data.course);
