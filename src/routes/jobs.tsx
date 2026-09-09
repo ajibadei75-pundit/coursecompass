@@ -331,12 +331,20 @@ function JobsPage() {
               ))}
             </select>
           </Field>
-          <Field label="City or area (optional)">
+          <Field
+            label={country === "Other country" ? "Country or city" : "City or area (optional)"}
+          >
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder={country === "Nigeria" ? "Nigeria or Lagos" : `${country} or a city`}
+              placeholder={
+                country === "Other country"
+                  ? "e.g. Germany or Berlin"
+                  : country === "Nigeria"
+                    ? "Nigeria or Lagos"
+                    : `${country} or a city`
+              }
               className="input-field pl-10 pr-32"
             />
             <button
