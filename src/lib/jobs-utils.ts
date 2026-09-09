@@ -146,10 +146,11 @@ export function platformLinks(query: string, location: string, country = "Nigeri
     .replace(/\b(nigeria|remote|anywhere)\b/gi, "")
     .trim() || "Lagos";
   const citySlug = city.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const roleSlug = query.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return [
     {
       name: "Y Combinator",
-      url: `https://www.ycombinator.com/jobs/location/${citySlug || "lagos"}`,
+      url: `https://www.ycombinator.com/jobs/${roleSlug ? `role/${roleSlug}/` : "location/"}${citySlug || "lagos"}`,
     },
     { name: "Jobberman", url: `https://www.jobberman.com/jobs?q=${q}` },
     { name: "MyJobMag", url: `https://www.myjobmag.com/search/jobs?q=${q}` },
