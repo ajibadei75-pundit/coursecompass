@@ -595,7 +595,8 @@ function JobsPage() {
           <div className="mt-10 glass rounded-2xl p-5">
             <div className="text-sm font-medium">More places to find Nigerian opportunities</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Pre-filled searches using your profession and location.
+              Pre-filled searches using your profession and location, including Nigerian startup
+              roles.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {links.map((l) => (
@@ -615,7 +616,8 @@ function JobsPage() {
               <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">
                 Remote OK
               </a>{" "}
-              and The Muse.
+              and The Muse. Y Combinator, LinkedIn, Indeed and the other links above open live
+              searches on each platform.
             </p>
           </div>
         </section>
