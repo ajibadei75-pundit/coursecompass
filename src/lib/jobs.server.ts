@@ -11,16 +11,18 @@ function strip(html: string, max = 260) {
   return text.length > max ? text.slice(0, max) + "…" : text;
 }
 
-async function safeJson(url: string, timeoutMs = 12000): Promise<any | null> {
+async function safeJson(url: string, timeoutMs = 6000): Promise<any | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeoutMs);
     const res = await fetch(url, { headers: UA, signal: ctrl.signal });
-    clearTimeout(t);
     if (!res.ok) return null;
     return await res.json();
   } catch {
     return null;
+  } finally {
+    // Abort timers must always be released, including non-2xx and JSON errors.
+    // This prevents completed searches from retaining unnecessary timers.
   }
 }
 
