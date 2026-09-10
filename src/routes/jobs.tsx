@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
 import {
   Briefcase,
   MapPin,
@@ -271,11 +272,12 @@ function JobsPage() {
     [mutation.data, course, profession, location, country],
   );
 
-  const canSearch = course.trim().length > 1 && !mutation.isPending;
+  const canSearch =
+    (course.trim().length > 1 || profession.trim().length > 1) && !mutation.isPending;
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
-      <header className="max-w-2xl">
+      <header className="max-w-3xl">
         <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs text-gold">
           <Briefcase className="size-3.5" /> Nigeria-first job intelligence
         </span>
@@ -284,13 +286,29 @@ function JobsPage() {
           <span className="text-gradient-brand">your profession</span>
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Start with the work you want to do. We prioritise roles in Nigeria, then use your course,
-          additional skills and location to rank relevant listings from live job sources.
+          Search by profession or course. We rank Nigeria-ready graduate roles using your skills,
+          location, freshness and career fit.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {["Nigeria-first", "Live job feeds", "Graduate-fit ranking"].map((item) => (
+            <span key={item} className="rounded-full border border-border bg-surface px-3 py-1.5">
+              {item}
+            </span>
+          ))}
+        </div>
       </header>
 
       {/* Search panel */}
-      <section className="mt-8 glass rounded-2xl p-5 sm:p-6 animate-fade-in">
+      <section className="mt-8 rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6 animate-fade-in">
+        <div className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-4">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Build your job search</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Only one of profession or course is required.</p>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-primary">
+            <Wifi className="size-3.5" /> Live sources
+          </span>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Target profession">
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -422,10 +440,11 @@ function JobsPage() {
             />
             Remote only
           </label>
-          <button
+          <Button
             onClick={() => canSearch && mutation.mutate()}
             disabled={!canSearch}
-            className="relative overflow-hidden inline-flex items-center gap-2 rounded-lg bg-gradient-brand px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50 transition hover:shadow-[0_10px_40px_-12px_var(--glow)]"
+            size="lg"
+            className="min-w-40 bg-gradient-brand shadow-sm"
           >
             {mutation.isPending ? (
               <Loader2 className="size-4 animate-spin" />
@@ -433,7 +452,7 @@ function JobsPage() {
               <Sparkles className="size-4" />
             )}
             {mutation.isPending ? `Matching ${country} jobs…` : "Find my jobs"}
-          </button>
+          </Button>
 
           <button
             onClick={toggleAlerts}
@@ -465,12 +484,33 @@ function JobsPage() {
       </section>
 
       {/* Results */}
-      {mutation.isPending && <SkeletonGrid />}
+      {mutation.isPending && (
+        <div role="status" aria-live="polite">
+          <div className="mt-8 flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm">
+            <Loader2 className="size-4 animate-spin text-primary" />
+            <div>
+              <div className="font-medium">Searching live opportunities</div>
+              <div className="text-xs text-muted-foreground">Checking trusted feeds and ranking graduate-fit roles. This can take a few seconds.</div>
+            </div>
+          </div>
+          <SkeletonGrid />
+        </div>
+      )}
 
       {mutation.isError && (
-        <p className="mt-6 text-sm text-destructive">
-          Job search failed. Please wait a moment and try again.
-        </p>
+        <div role="alert" className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <div>
+            <div className="text-sm font-medium text-destructive">The live feeds did not respond in time.</div>
+            <p className="mt-1 text-xs text-muted-foreground">Retry now or use the direct platform searches below.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => mutation.mutate()}>
+            <RefreshCw className="size-3.5" /> Retry
+          </Button>
+        </div>
+      )}
+
+      {!mutation.data && !mutation.isPending && (
+        <PlatformSearches links={links} />
       )}
 
       {mutation.data && !mutation.isPending && (
@@ -592,37 +632,40 @@ function JobsPage() {
             </p>
           )}
 
-          <div className="mt-10 glass rounded-2xl p-5">
-            <div className="text-sm font-medium">More places to find Nigerian opportunities</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Pre-filled searches using your profession and location, including Nigerian startup
-              roles.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {links.map((l) => (
-                <a
-                  key={l.name}
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs hover:border-primary/60 hover:text-primary transition hover-scale"
-                >
-                  {l.name} <ArrowUpRight className="size-3" />
-                </a>
-              ))}
-            </div>
-            <p className="mt-4 text-[11px] text-muted-foreground">
-              Live listings are sourced from Remotive, Jobicy, Arbeitnow,{" "}
-              <a className="story-link" href="https://remoteok.com" target="_blank" rel="noopener">
-                Remote OK
-              </a>{" "}
-              and The Muse. Y Combinator, LinkedIn, Indeed and the other links above open live
-              searches on each platform.
-            </p>
-          </div>
+          <PlatformSearches links={links} />
         </section>
       )}
     </div>
+  );
+}
+
+function PlatformSearches({ links }: { links: ReturnType<typeof platformLinks> }) {
+  return (
+    <section className="mt-8 rounded-xl border border-border bg-surface p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-base font-semibold">Search major job platforms</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Direct searches stay available even when a live feed is slow.
+          </p>
+        </div>
+        <Globe2 className="size-5 shrink-0 text-primary" />
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {links.map((link) => (
+          <a
+            key={link.name}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center justify-between rounded-lg border border-border bg-background px-3 py-3 text-sm transition hover:border-primary/60 hover:text-primary"
+          >
+            {link.name}
+            <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
+        ))}
+      </div>
+    </section>
   );
 }
 
