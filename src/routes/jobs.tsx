@@ -303,7 +303,9 @@ function JobsPage() {
         <div className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-4">
           <div>
             <h2 className="font-display text-lg font-semibold">Build your job search</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Only one of profession or course is required.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Only one of profession or course is required.
+            </p>
           </div>
           <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-primary">
             <Wifi className="size-3.5" /> Live sources
@@ -490,7 +492,9 @@ function JobsPage() {
             <Loader2 className="size-4 animate-spin text-primary" />
             <div>
               <div className="font-medium">Searching live opportunities</div>
-              <div className="text-xs text-muted-foreground">Checking trusted feeds and ranking graduate-fit roles. This can take a few seconds.</div>
+              <div className="text-xs text-muted-foreground">
+                Checking trusted feeds and ranking graduate-fit roles. This can take a few seconds.
+              </div>
             </div>
           </div>
           <SkeletonGrid />
@@ -498,10 +502,17 @@ function JobsPage() {
       )}
 
       {mutation.isError && (
-        <div role="alert" className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+        <div
+          role="alert"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+        >
           <div>
-            <div className="text-sm font-medium text-destructive">The live feeds did not respond in time.</div>
-            <p className="mt-1 text-xs text-muted-foreground">Retry now or use the direct platform searches below.</p>
+            <div className="text-sm font-medium text-destructive">
+              The live feeds did not respond in time.
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Retry now or use the direct platform searches below.
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => mutation.mutate()}>
             <RefreshCw className="size-3.5" /> Retry
@@ -509,9 +520,7 @@ function JobsPage() {
         </div>
       )}
 
-      {!mutation.data && !mutation.isPending && (
-        <PlatformSearches links={links} />
-      )}
+      {!mutation.data && !mutation.isPending && <PlatformSearches links={links} />}
 
       {mutation.data && !mutation.isPending && (
         <section className="mt-10">
