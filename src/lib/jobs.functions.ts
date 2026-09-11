@@ -43,9 +43,7 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
         ? location.split(",").at(-1)?.trim() || "Nigeria"
         : data.country.trim() || "Nigeria";
     const courseRoles = data.course.trim() ? fallbackRoles(data.course) : [];
-    let roles = data.profession.trim()
-      ? [data.profession.trim(), ...courseRoles]
-      : courseRoles;
+    let roles = data.profession.trim() ? [data.profession.trim(), ...courseRoles] : courseRoles;
     let notice: string | undefined;
 
     if (!data.quiet) {
@@ -66,7 +64,9 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
               `You map university courses, a target profession, and extra skills to realistic job titles in ${country} and remote roles open to people there. ` +
               "Prioritize the target profession, then course-aligned roles and skill-adjacent roles. Return 6 concrete, searchable job titles (no seniority fluff), ordered by best fit.",
             prompt: `Country: ${country}. Course: ${data.course || "not specified"}. Target profession: ${data.profession || "not specified"}. Extra skills: ${data.skills.join(", ") || "none"}. Preferred location: ${location}.`,
-            output: Output.object({ schema: z.object({ roles: z.array(z.string()).min(3).max(8) }) }),
+            output: Output.object({
+              schema: z.object({ roles: z.array(z.string()).min(3).max(8) }),
+            }),
           }),
           4_000,
         );
