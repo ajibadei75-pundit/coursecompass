@@ -1,17 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const InputSchema = z.object({
-  course: z.string().max(120).default(""),
-  profession: z.string().max(100).default(""),
-  skills: z.array(z.string().max(40)).max(15).default([]),
-  country: z.string().min(2).max(60).default("Nigeria"),
-  location: z.string().max(80).default("Nigeria"),
-  remoteOnly: z.boolean().default(false),
-  quiet: z.boolean().default(false),
-}).refine((data) => data.course.trim().length >= 2 || data.profession.trim().length >= 2, {
-  message: "Enter a profession or university course.",
-});
+const InputSchema = z
+  .object({
+    course: z.string().max(120).default(""),
+    profession: z.string().max(100).default(""),
+    skills: z.array(z.string().max(40)).max(15).default([]),
+    country: z.string().min(2).max(60).default("Nigeria"),
+    location: z.string().max(80).default("Nigeria"),
+    remoteOnly: z.boolean().default(false),
+    quiet: z.boolean().default(false),
+  })
+  .refine((data) => data.course.trim().length >= 2 || data.profession.trim().length >= 2, {
+    message: "Enter a profession or university course.",
+  });
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
@@ -41,9 +43,7 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
         ? location.split(",").at(-1)?.trim() || "Nigeria"
         : data.country.trim() || "Nigeria";
     const courseRoles = data.course.trim() ? fallbackRoles(data.course) : [];
-    let roles = data.profession.trim()
-      ? [data.profession.trim(), ...courseRoles]
-      : courseRoles;
+    let roles = data.profession.trim() ? [data.profession.trim(), ...courseRoles] : courseRoles;
     let notice: string | undefined;
 
     if (!data.quiet) {
@@ -64,7 +64,9 @@ export const searchJobsForCourse = createServerFn({ method: "POST" })
               `You map university courses, a target profession, and extra skills to realistic job titles in ${country} and remote roles open to people there. ` +
               "Prioritize the target profession, then course-aligned roles and skill-adjacent roles. Return 6 concrete, searchable job titles (no seniority fluff), ordered by best fit.",
             prompt: `Country: ${country}. Course: ${data.course || "not specified"}. Target profession: ${data.profession || "not specified"}. Extra skills: ${data.skills.join(", ") || "none"}. Preferred location: ${location}.`,
-            output: Output.object({ schema: z.object({ roles: z.array(z.string()).min(3).max(8) }) }),
+            output: Output.object({
+              schema: z.object({ roles: z.array(z.string()).min(3).max(8) }),
+            }),
           }),
           4_000,
         );
