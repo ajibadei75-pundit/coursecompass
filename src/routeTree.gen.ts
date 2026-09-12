@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MatchRouteImport } from './routes/match'
-import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,11 +20,6 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 const MatchRoute = MatchRouteImport.update({
   id: '/match',
   path: '/match',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JobsRoute = JobsRouteImport.update({
-  id: '/jobs',
-  path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -63,7 +57,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/jobs': typeof JobsRoute
   '/match': typeof MatchRoute
   '/api/chat': typeof ApiChatRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -73,7 +66,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/jobs': typeof JobsRoute
   '/match': typeof MatchRoute
   '/api/chat': typeof ApiChatRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -84,7 +76,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/chat': typeof ChatRoute
-  '/jobs': typeof JobsRoute
   '/match': typeof MatchRoute
   '/api/chat': typeof ApiChatRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -96,7 +87,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/chat'
-    | '/jobs'
     | '/match'
     | '/api/chat'
     | '/courses/$slug'
@@ -106,7 +96,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/chat'
-    | '/jobs'
     | '/match'
     | '/api/chat'
     | '/courses/$slug'
@@ -116,7 +105,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/chat'
-    | '/jobs'
     | '/match'
     | '/api/chat'
     | '/courses/$slug'
@@ -127,7 +115,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ChatRoute: typeof ChatRoute
-  JobsRoute: typeof JobsRoute
   MatchRoute: typeof MatchRoute
   ApiChatRoute: typeof ApiChatRoute
   CoursesSlugRoute: typeof CoursesSlugRoute
@@ -141,13 +128,6 @@ declare module '@tanstack/react-router' {
       path: '/match'
       fullPath: '/match'
       preLoaderRoute: typeof MatchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/jobs': {
-      id: '/jobs'
-      path: '/jobs'
-      fullPath: '/jobs'
-      preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -199,7 +179,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ChatRoute: ChatRoute,
-  JobsRoute: JobsRoute,
   MatchRoute: MatchRoute,
   ApiChatRoute: ApiChatRoute,
   CoursesSlugRoute: CoursesSlugRoute,
