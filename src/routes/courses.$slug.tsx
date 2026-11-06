@@ -19,6 +19,8 @@ export const Route = createFileRoute("/courses/$slug")({
           property: "og:description",
           content: `Real opportunities, salaries and skills for ${name} in Nigeria.`,
         },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },
@@ -62,10 +64,10 @@ function CourseProfilePage() {
 }
 
 const RISK_COLOR: Record<string, string> = {
-  "Very Safe": "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-  "Safe": "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
-  "Medium": "text-amber-300 bg-amber-500/10 border-amber-500/30",
-  "High Risk": "text-rose-300 bg-rose-500/10 border-rose-500/30",
+  "Very Safe": "text-success bg-success/10 border-success/30",
+  "Safe": "text-success bg-success/10 border-success/20",
+  "Medium": "text-gold bg-gold/10 border-gold/30",
+  "High Risk": "text-destructive bg-destructive/10 border-destructive/30",
 };
 
 function Profile({ slug, title, p }: { slug: string; title: string; p: CourseProfile }) {
@@ -92,12 +94,12 @@ function Profile({ slug, title, p }: { slug: string; title: string; p: CoursePro
         <div className="grid gap-3">
           {p.misconceptions.map((m, i) => (
             <div key={i} className="grid sm:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-4">
-                <div className="text-xs uppercase tracking-wider text-rose-300/80">Myth</div>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <div className="text-xs uppercase tracking-wider text-destructive">Myth</div>
                 <p className="text-sm mt-1">{m.myth}</p>
               </div>
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-                <div className="text-xs uppercase tracking-wider text-emerald-300/80">Reality</div>
+              <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+                <div className="text-xs uppercase tracking-wider text-success">Reality</div>
                 <p className="text-sm mt-1">{m.reality}</p>
               </div>
             </div>
@@ -115,7 +117,7 @@ function Profile({ slug, title, p }: { slug: string; title: string; p: CoursePro
       </Section>
 
       <Section icon={<Wallet className="size-4" />} title="Salary intelligence">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Stat label="Entry (NG)" value={p.salary.entry_ngn} />
           <Stat label="Mid (NG)" value={p.salary.mid_ngn} />
           <Stat label="Senior (NG)" value={p.salary.senior_ngn} />
@@ -264,7 +266,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border/50 bg-surface-2/40 p-3">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="text-sm mt-1">{value}</div>
+      <div className="mt-1 break-words text-sm">{value}</div>
     </div>
   );
 }

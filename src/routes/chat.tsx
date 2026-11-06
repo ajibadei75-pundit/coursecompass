@@ -13,6 +13,8 @@ export const Route = createFileRoute("/chat")({
       { name: "description", content: "Ask anything about Nigerian university courses, careers, salaries and skills. Get empathetic, AI-powered guidance." },
       { property: "og:title", content: "AI Career Assistant — CourseCompass" },
       { property: "og:description", content: "Empathetic AI guidance for Nigerian students about courses and careers." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ChatPage,
@@ -47,7 +49,7 @@ function ChatPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 flex flex-col min-h-[calc(100vh-4rem)]">
+    <div className="mx-auto flex min-h-[calc(100dvh-7rem)] w-full max-w-3xl flex-col px-4 py-6 sm:min-h-[calc(100vh-4rem)] sm:px-6 sm:py-8">
       <header className="mb-4">
         <div className="flex items-center gap-2 text-gold text-xs uppercase tracking-wider">
           <Sparkles className="size-3.5" /> AI Career Assistant
@@ -56,11 +58,11 @@ function ChatPage() {
           Ask anything about your course or career
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Drafted by Claude, validated by GPT-5 for tone, structure & citations.
+          Practical, Nigeria-aware guidance for your course and career questions.
         </p>
       </header>
 
-      <div className="flex-1 space-y-4 overflow-y-auto pb-4">
+      <div className="min-w-0 flex-1 space-y-4 overflow-y-auto pb-4">
         {messages.length === 0 && (
           <div className="glass rounded-xl p-5">
             <div className="text-sm font-medium mb-3">Try one of these:</div>
@@ -83,7 +85,7 @@ function ChatPage() {
           if (m.role === "user") {
             return (
               <div key={m.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="min-w-0 max-w-[85%] break-words rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground whitespace-pre-wrap">
                   {text}
                 </div>
               </div>
@@ -101,7 +103,7 @@ function ChatPage() {
         )}
 
         {error && (
-          <div className="text-sm text-rose-300">Something went wrong. Try again.</div>
+          <div className="text-sm text-destructive">Something went wrong. Try again.</div>
         )}
       </div>
 
@@ -118,7 +120,7 @@ function ChatPage() {
             }}
             rows={1}
             placeholder="Ask about your course, career, salary, skills..."
-            className="flex-1 resize-none bg-transparent px-3 py-2 text-sm focus:outline-none max-h-40"
+            className="min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-sm focus:outline-none max-h-40"
           />
           <button
             type="submit"
@@ -145,9 +147,9 @@ function AssistantMessage({ text }: { text: string }) {
   };
   return (
     <div className="flex justify-start group">
-      <div className="relative max-w-[92%] glass rounded-2xl rounded-bl-sm px-5 py-4 text-sm leading-relaxed">
+      <div className="relative glass min-w-0 max-w-[92%] rounded-2xl rounded-bl-sm px-4 py-4 text-sm leading-relaxed sm:px-5">
         <div
-          className="prose prose-sm prose-invert max-w-none
+          className="prose prose-sm max-w-none break-words
             prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
             prose-h1:text-lg prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2
             prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-wider prose-h3:text-gold prose-h3:mt-4 prose-h3:mb-1.5
@@ -162,14 +164,14 @@ function AssistantMessage({ text }: { text: string }) {
             prose-th:text-gold prose-th:font-medium prose-th:uppercase prose-th:tracking-wider prose-th:text-[10px] prose-th:py-1.5 prose-th:pr-3 prose-th:text-left
             prose-td:py-1.5 prose-td:pr-3 prose-td:align-top prose-td:text-foreground/90
             prose-tr:border-b prose-tr:border-border/30
-            prose-hr:border-border/50"
+            prose-hr:border-border/50 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_code]:break-words"
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{text || "…"}</ReactMarkdown>
         </div>
         {text && (
           <button
             onClick={copy}
-            className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition rounded-full bg-surface-2 border border-border/60 p-1.5 text-muted-foreground hover:text-foreground"
+            className="absolute -top-2 -right-2 rounded-full border border-border/60 bg-surface-2 p-1.5 text-muted-foreground opacity-0 transition hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
             aria-label="Copy response"
           >
             {copied ? <Check className="size-3" /> : <Copy className="size-3" />}

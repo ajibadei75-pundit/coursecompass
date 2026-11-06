@@ -54,6 +54,8 @@ export const Route = createFileRoute("/match")({
       { name: "description", content: "Discover the Nigerian university courses that truly match your mind and personality." },
       { property: "og:title", content: "Course Match Test — CourseCompass" },
       { property: "og:description", content: "Take a 20-question quiz to find your best-fit Nigerian university course." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MatchPage,
@@ -144,7 +146,7 @@ function MatchPage() {
           <h2 className="font-display text-xl mb-3">Probably not for you</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {r.avoid.map((c) => (
-              <div key={c.course} className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
+              <div key={c.course} className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
                 <div className="font-medium">{c.course}</div>
                 <p className="text-xs text-muted-foreground mt-1">{c.why}</p>
               </div>
@@ -185,7 +187,7 @@ function MatchPage() {
         20 quick questions. Rate how true each statement is for you. Honest answers give honest matches.
       </p>
 
-      <div className="sticky top-16 z-30 mt-6 backdrop-blur-md bg-background/70 py-3">
+      <div className="sticky top-24 z-30 mt-6 bg-background/90 py-3 backdrop-blur-md sm:top-16">
         <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
           <div className="h-full bg-gradient-to-r from-primary to-gold transition-all" style={{ width: `${progress}%` }} />
         </div>
@@ -204,7 +206,7 @@ function MatchPage() {
                     key={s.v}
                     onClick={() => setAnswers((a) => ({ ...a, [q.id]: s.v }))}
                     className={
-                      "rounded-full border px-3 py-1.5 text-xs transition " +
+                    "min-h-10 rounded-full border px-3 py-2 text-xs transition " +
                       (selected
                         ? "border-primary bg-primary/20 text-primary"
                         : "border-border bg-surface-2/60 text-muted-foreground hover:border-primary/40")
@@ -232,7 +234,7 @@ function MatchPage() {
       </div>
 
       {mutation.isError && (
-        <p className="mt-4 text-sm text-rose-300">
+        <p className="mt-4 text-sm text-destructive">
           Something went wrong: {(mutation.error as Error).message}
         </p>
       )}

@@ -5,6 +5,10 @@ export const Route = createFileRoute("/about")({
     meta: [
       { title: "About — CourseCompass" },
       { name: "description", content: "Why CourseCompass exists: turning course confusion into career clarity for Nigerian students." },
+      { property: "og:title", content: "About CourseCompass" },
+      { property: "og:description", content: "Why CourseCompass exists: turning course confusion into career clarity for Nigerian students." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: About,
@@ -12,7 +16,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 prose prose-invert">
+    <div className="prose prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
       <h1 className="font-display text-4xl font-semibold">About CourseCompass</h1>
       <p className="text-muted-foreground mt-4 text-lg">
         Every year, millions of Nigerian students walk into universities feeling defeated. They wanted
@@ -31,7 +35,7 @@ function About() {
         roadmap to success."
       </p>
 
-      <div className="mt-8 flex gap-3 not-prose">
+      <div className="mt-8 flex flex-wrap gap-3 not-prose">
         <Link to="/match" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
           Take the Match Test
         </Link>

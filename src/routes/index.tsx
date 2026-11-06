@@ -15,6 +15,8 @@ export const Route = createFileRoute("/")({
           "Got placed in a course you didn't choose? Discover the real opportunities, salaries, skills and AI impact of every Nigerian university course.",
       },
       { property: "og:title", content: "CourseCompass" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
@@ -80,7 +82,7 @@ function Hero() {
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
             <Sparkles className="size-3.5" /> Built for Nigerian students
           </span>
-          <h1 className="mt-5 font-display text-4xl sm:text-6xl font-bold leading-[1.05]">
+          <h1 className="mt-5 max-w-[16ch] font-display text-4xl font-bold leading-[1.05] sm:max-w-3xl sm:text-6xl">
             Helping students understand their future{" "}
             <span className="text-primary">before it's too late.</span>
           </h1>

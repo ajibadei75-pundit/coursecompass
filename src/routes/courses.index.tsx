@@ -15,6 +15,8 @@ export const Route = createFileRoute("/courses/")({
       },
       { property: "og:title", content: "Browse Courses — CourseCompass" },
       { property: "og:description", content: "Discover the truth about every Nigerian university course." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CoursesPage,
@@ -42,8 +44,8 @@ function CoursesPage() {
         Nigeria-specific profile — careers, salaries, skills, software, AI impact, and a 4-year roadmap.
       </p>
 
-      <form onSubmit={onSubmit} className="mt-6 flex gap-2 max-w-xl">
-        <div className="relative flex-1">
+      <form onSubmit={onSubmit} className="mt-6 flex max-w-xl flex-col gap-2 sm:flex-row">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             value={q}
@@ -54,7 +56,7 @@ function CoursesPage() {
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+          className="w-full shrink-0 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 sm:w-auto"
         >
           Open
         </button>

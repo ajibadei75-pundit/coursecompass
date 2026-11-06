@@ -38,6 +38,8 @@
   --color-glow: var(--glow);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
 }
 
 :root {
@@ -76,6 +78,8 @@
 
   --gold: oklch(0.54 0.12 78);
   --glow: oklch(0.62 0.17 275);
+  --success: oklch(0.42 0.13 150);
+  --success-foreground: oklch(0.99 0.01 150);
 }
 
 .dark {
@@ -106,6 +110,8 @@
   --ring: oklch(0.68 0.2 275);
   --gold: oklch(0.82 0.13 85);
   --glow: oklch(0.68 0.2 275);
+  --success: oklch(0.72 0.16 150);
+  --success-foreground: oklch(0.16 0.04 150);
 }
 
 @layer base {

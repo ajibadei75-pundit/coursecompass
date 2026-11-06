@@ -19,7 +19,7 @@ export function SiteHeader() {
             <Compass className="size-4" />
           </span>
           <span className="truncate font-display text-base font-semibold sm:text-lg">
-            CourseCompass <span className="text-gold">NG</span>
+            CourseCompass
           </span>
         </Link>
         <nav aria-label="Main navigation" className="hidden md:flex items-center gap-1">
