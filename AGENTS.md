@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+Shared appearance preferences belong in reusable site-level controls, while theme colors stay in global semantic tokens so every route changes consistently.
