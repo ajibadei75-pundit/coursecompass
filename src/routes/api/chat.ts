@@ -70,10 +70,10 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Missing AI credentials", { status: 500 });
         }
 
-        // Use Gemini Flash models — highest rate limits on Lovable AI Gateway.
-        // Drafter (Flash Lite) is fast and cheap; validator (Flash) polishes structure.
-        const drafterModel = gateway("google/gemini-flash-lite-latest");
-        const validatorModel = gateway("google/gemini-flash-latest");
+        // Use the supported Gemini Flash Lite model; the retired "latest"
+        // Flash alias can accept requests without producing answer text.
+        const drafterModel = gateway("google/gemini-3.5-flash-lite");
+        const validatorModel = gateway("google/gemini-3.5-flash-lite");
 
         const messages = body.messages as UIMessage[];
         const userQuestion = extractLastUserText(messages).slice(0, MAX_CHARS);

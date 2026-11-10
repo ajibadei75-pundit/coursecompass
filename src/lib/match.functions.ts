@@ -57,9 +57,9 @@ export const analyzeMatchQuiz = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
-    // Gemini Flash — high rate limits, native JSON schema support (no strict mode needed).
+    // Use a supported Flash Lite model with structured JSON output support.
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-flash-latest");
+    const model = gateway("google/gemini-3.5-flash-lite");
 
 
     const { output } = await generateText({
